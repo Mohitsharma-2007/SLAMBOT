@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>slam_bot_bridge</name>
+  <version>1.0.0</version>
+  <description>
+    Bridge between the SLAM Bot's MCUs and ROS2. Publishes /scan and /odom from
+    WebSocket telemetry and subscribes to /cmd_vel. The FastAPI backend embeds
+    this same bridge logic (backend/ros_bridge.py); this package provides the
+    standalone node plus the web relay for running them as separate processes.
+  </description>
+  <maintainer email="you@example.com">SLAM Bot</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>rcl_interfaces</depend>
+
+  <exec_depend>ros2launch</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

@@ -1,0 +1,81 @@
+# =============================================================================
+# slam_toolbox — online ASYNC mode (§8)
+#
+# Async is the right mode here: scans arrive over WiFi at ~5.5 Hz with variable
+# latency, and async mode processes whatever is available rather than blocking
+# on a fixed rate. Sync mode would stall the whole pipeline on a dropped frame.
+#
+# Scan matching parameters are scaled to a 6 m lidar on a robot that moves at
+# 0.3 m/s. slam_toolbox's defaults assume a longer-range lidar on a faster base;
+# leaving them would produce a map that drifts on every turn.
+# =============================================================================
+slam_toolbox:
+  ros__parameters:
+    # --- plugins ----------------------------------------------------------
+    solver_plugin: solver_plugins::CeresSolver
+    ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
+    ceres_preconditioner: SCHUR_JACOBI
+    ceres_trust_strategy: LEVENBERG_MARQUARDT
+    ceres_dogleg_type: TRADITIONAL_DOGLEG
+    ceres_loss_function: None
+
+    # --- frames and topics ------------------------------------------------
+    odom_frame: odom
+    map_frame: map
+    base_frame: base_link
+    scan_topic: /scan
+    use_map_saver: true
+    mode: mapping          # switch to "localization" to reuse a saved map
+
+    # Uncomment and point at a saved map to relocalise instead of remapping:
+    # map_file_name: /path/to/saved_map
+    # map_start_pose: [0.0, 0.0, 0.0]
+
+    debug_logging: false
+    throttle_scans: 1
+    transform_publish_period: 0.02      # 50 Hz map->odom TF
+    map_update_interval: 1.0            # 1 Hz occupancy grid regeneration
+    resolution: 0.05                    # 5 cm cells
+    max_laser_range: 6.0                # §10 lidar_max_range_mm = 6000
+    minimum_time_between_scans: 0.15
+    minimum_travel_distance: 0.05        # 5 cm — this robot moves in small steps
+    minimum_travel_heading: 0.1          # ~6 deg
+    transform_timeout: 0.3
+    tf_buffer_duration: 30.0
+    stack_size_to_use: 40000000
+    enable_interactive_mode: false
+
+    # --- scan matching ----------------------------------------------------
+    use_scan_matching: true
+    use_scan_barycenter: true
+    scan_buffer_size: 20
+    scan_buffer_maximum_scan_distance: 7.0
+    link_match_minimum_response_fine: 0.1
+    link_scan_maximum_distance: 1.5
+    loop_search_maximum_distance: 3.0
+    do_loop_closing: true
+    loop_match_minimum_chain_size: 8
+    loop_match_maximum_variance_coarse: 3.0
+    loop_match_minimum_response_coarse: 0.35
+    loop_match_minimum_response_fine: 0.45
+
+    # --- correlation grids ------------------------------------------------
+    correlation_search_space_dimension: 0.5
+    correlation_search_space_resolution: 0.01
+    correlation_search_space_smear_deviation: 0.1
+
+    loop_search_space_dimension: 6.0
+    loop_search_space_resolution: 0.05
+    loop_search_space_smear_deviation: 0.03
+
+    # --- scan matcher penalties ------------------------------------------
+    # Wheel odometry on N20 motors with a light chassis slips, so the matcher is
+    # allowed to disagree with odometry fairly freely.
+    distance_variance_penalty: 0.5
+    angle_variance_penalty: 1.0
+    fine_search_angle_offset: 0.00349
+    coarse_search_angle_offset: 0.349
+    coarse_angle_resolution: 0.0349
+    minimum_angle_penalty: 0.9
+    minimum_distance_penalty: 0.5
+    use_response_expansion: true

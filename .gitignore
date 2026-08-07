@@ -1,0 +1,32 @@
+# Secrets — WiFi credentials live in these, they must never be committed.
+# The templates are tracked; your filled-in copies are not.
+firmware/*/secrets.h
+!firmware/*/secrets.h.example
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+webapp/dist/
+
+# Build artifacts
+build/
+sessions/
+
+# ROS2
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

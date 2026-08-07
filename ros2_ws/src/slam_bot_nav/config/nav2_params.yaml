@@ -1,0 +1,377 @@
+# =============================================================================
+# Nav2 parameters for the SLAM Bot
+#
+# §8 fixes the stack: SmacPlanner2D (A*) global planner + DWB local controller.
+# TEB / RRT* / D* Lite are the documented upgrade path, not v1.
+#
+# Everything here is scaled for the real robot, which is much smaller and slower
+# than Nav2's TurtleBot-derived defaults:
+#   footprint      ~150 mm wheelbase, ~200 mm diagonal -> 0.12 m robot_radius
+#   max speed      0.30 m/s   (§10 max_linear_speed_mm_s = 300)
+#   max rotation   1.047 rad/s (§10 max_angular_speed_mdeg_s = 60000 = 60 deg/s)
+#   lidar range    0.15-6.0 m  (§10 lidar_min/max_range_mm)
+#   inflation      0.15 m      (§10 obstacle_inflation_radius_mm)
+#
+# The Tuning Panel live-overrides the velocity limits and inflation radius via
+# the ROS parameter services (§11). Values below are the boot defaults.
+#
+# Leaving Nav2's defaults in place would make this robot unusable: a 0.26 m/s
+# xy_goal_tolerance is nearly twice its own body length, and the default
+# 0.25 m/s min turning radius assumptions do not apply to a differential drive
+# that can spin in place.
+# =============================================================================
+
+amcl:
+  ros__parameters:
+    # AMCL is optional (§8) — only used when relocalising in a *saved* map
+    # instead of running continuous SLAM. Not launched by default.
+    use_sim_time: false
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
+    base_frame_id: "base_link"
+    global_frame_id: "map"
+    odom_frame_id: "odom"
+    scan_topic: "scan"
+    laser_min_range: 0.15
+    laser_max_range: 6.0
+    max_beams: 180
+    min_particles: 300
+    max_particles: 2000
+    robot_model_type: "nav2_amcl::DifferentialMotionModel"
+    tf_broadcast: true
+    transform_tolerance: 0.5
+    update_min_a: 0.2
+    update_min_d: 0.05
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: false
+    global_frame: map
+    robot_base_frame: base_link
+    odom_topic: /odom
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    # Nav2 Humble+ loads the default BT XMLs from nav2_bt_navigator when these
+    # are left unset, which is what we want — no custom tree in v1.
+    plugin_lib_names:
+      - nav2_compute_path_to_pose_action_bt_node
+      - nav2_compute_path_through_poses_action_bt_node
+      - nav2_follow_path_action_bt_node
+      - nav2_back_up_action_bt_node
+      - nav2_spin_action_bt_node
+      - nav2_wait_action_bt_node
+      - nav2_clear_costmap_service_bt_node
+      - nav2_is_stuck_condition_bt_node
+      - nav2_goal_reached_condition_bt_node
+      - nav2_goal_updated_condition_bt_node
+      - nav2_initial_pose_received_condition_bt_node
+      - nav2_reinitialize_global_localization_service_bt_node
+      - nav2_rate_controller_bt_node
+      - nav2_distance_controller_bt_node
+      - nav2_speed_controller_bt_node
+      - nav2_recovery_node_bt_node
+      - nav2_pipeline_sequence_bt_node
+      - nav2_round_robin_node_bt_node
+      - nav2_navigate_to_pose_action_bt_node
+      - nav2_navigate_through_poses_action_bt_node
+
+controller_server:
+  ros__parameters:
+    use_sim_time: false
+    # 10 Hz. The robot is slow, and the backend relays cmd_vel over WiFi to the
+    # MCU — a faster loop just adds WiFi traffic without improving tracking.
+    controller_frequency: 10.0
+    min_x_velocity_threshold: 0.005
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.05
+    failure_tolerance: 0.3
+    progress_checker_plugin: "progress_checker"
+    goal_checker_plugins: ["general_goal_checker"]
+    controller_plugins: ["FollowPath"]
+
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      # 50 mm in 10 s. Generous: N20 motors on carpet genuinely creep.
+      required_movement_radius: 0.05
+      movement_time_allowance: 10.0
+
+    general_goal_checker:
+      stateful: true
+      plugin: "nav2_controller::SimpleGoalChecker"
+      # ~1 body radius. Nav2's 0.25 default is larger than this whole robot.
+      xy_goal_tolerance: 0.10
+      yaw_goal_tolerance: 0.20
+
+    FollowPath:
+      # §8: DWB (Dynamic Window Approach) local controller.
+      plugin: "dwb_core::DWBLocalPlanner"
+      debug_trajectory_details: true
+
+      # --- velocity limits (§10, live-tunable) ---------------------------
+      min_vel_x: -0.10          # reverse allowed, but slowly
+      max_vel_x: 0.30           # max_linear_speed_mm_s = 300
+      min_vel_y: 0.0            # differential drive: no lateral motion
+      max_vel_y: 0.0
+      max_vel_theta: 1.047      # max_angular_speed_mdeg_s = 60000 -> rad/s
+      min_speed_xy: -0.10
+      max_speed_xy: 0.30
+      min_speed_theta: -1.047
+
+      # --- acceleration -------------------------------------------------
+      # Small geared motors reach speed quickly; 0.5 m/s^2 is ~0.6 s to full
+      # speed, which the DRV8833 and the 2S pack handle without brownout.
+      acc_lim_x: 0.5
+      acc_lim_y: 0.0
+      acc_lim_theta: 2.0
+      decel_lim_x: -0.7
+      decel_lim_y: 0.0
+      decel_lim_theta: -2.5
+
+      # --- trajectory sampling ------------------------------------------
+      vx_samples: 12
+      vy_samples: 1
+      vtheta_samples: 20
+      sim_time: 1.5             # look 1.5 s ahead = 0.45 m at top speed
+      linear_granularity: 0.03
+      angular_granularity: 0.025
+      transform_tolerance: 0.3
+      xy_goal_tolerance: 0.10
+      trans_stopped_velocity: 0.02
+      short_circuit_trajectory_evaluation: true
+      stateful: true
+
+      critics:
+        - RotateToGoal
+        - Oscillation
+        - BaseObstacle
+        - GoalAlign
+        - PathAlign
+        - PathDist
+        - GoalDist
+
+      BaseObstacle.scale: 0.02
+      PathAlign.scale: 32.0
+      PathAlign.forward_point_distance: 0.10
+      GoalAlign.scale: 24.0
+      GoalAlign.forward_point_distance: 0.10
+      PathDist.scale: 32.0
+      GoalDist.scale: 24.0
+      RotateToGoal.scale: 32.0
+      RotateToGoal.slowing_factor: 5.0
+      RotateToGoal.lookahead_time: -1.0
+      # Oscillation reset must be smaller than the goal tolerance or the robot
+      # can be flagged as oscillating while legitimately converging.
+      Oscillation.oscillation_reset_dist: 0.05
+      Oscillation.oscillation_reset_angle: 0.2
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: false
+      update_frequency: 5.0
+      publish_frequency: 2.0
+      global_frame: odom
+      robot_base_frame: base_link
+      rolling_window: true
+      # 3x3 m window: comfortably inside the 6 m lidar range and cheap to update.
+      width: 3
+      height: 3
+      resolution: 0.03
+      # ~120 mm circumscribed radius for a 150 mm wheelbase chassis.
+      robot_radius: 0.12
+      plugins: ["obstacle_layer", "inflation_layer"]
+
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 0.5
+          clearing: true
+          marking: true
+          data_type: "LaserScan"
+          raytrace_max_range: 6.5
+          raytrace_min_range: 0.0
+          obstacle_max_range: 6.0
+          obstacle_min_range: 0.15
+          inf_is_valid: false
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        # §10 obstacle_inflation_radius_mm = 150. Live-tunable.
+        inflation_radius: 0.15
+        cost_scaling_factor: 5.0
+
+      always_send_full_costmap: true
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      use_sim_time: false
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: base_link
+      robot_radius: 0.12
+      resolution: 0.05
+      track_unknown_space: true
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 0.5
+          clearing: true
+          marking: true
+          data_type: "LaserScan"
+          raytrace_max_range: 6.5
+          raytrace_min_range: 0.0
+          obstacle_max_range: 6.0
+          obstacle_min_range: 0.15
+          inf_is_valid: false
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 0.15
+        cost_scaling_factor: 5.0
+
+      always_send_full_costmap: true
+
+planner_server:
+  ros__parameters:
+    use_sim_time: false
+    expected_planner_frequency: 2.0
+    planner_plugins: ["GridBased"]
+    GridBased:
+      # §8: SmacPlanner2D is the A*-family global planner to start with.
+      plugin: "nav2_smac_planner::SmacPlanner2D"
+      tolerance: 0.15
+      downsample_costmap: false
+      downsampling_factor: 1
+      allow_unknown: true
+      max_iterations: 1000000
+      max_on_approach_iterations: 1000
+      max_planning_time: 2.0
+      cost_travel_multiplier: 2.0
+      use_final_approach_orientation: false
+      smoother:
+        max_iterations: 1000
+        w_smooth: 0.3
+        w_data: 0.2
+        tolerance: 1.0e-10
+
+smoother_server:
+  ros__parameters:
+    use_sim_time: false
+    smoother_plugins: ["simple_smoother"]
+    simple_smoother:
+      plugin: "nav2_smoother::SimpleSmoother"
+      tolerance: 1.0e-10
+      max_its: 1000
+      do_refinement: true
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: false
+    local_costmap_topic: local_costmap/costmap_raw
+    global_costmap_topic: global_costmap/costmap_raw
+    local_footprint_topic: local_costmap/published_footprint
+    global_footprint_topic: global_costmap/published_footprint
+    cycle_frequency: 10.0
+    behavior_plugins: ["spin", "backup", "drive_on_heading", "wait"]
+    spin:
+      plugin: "nav2_behaviors::Spin"
+    backup:
+      plugin: "nav2_behaviors::BackUp"
+    drive_on_heading:
+      plugin: "nav2_behaviors::DriveOnHeading"
+    wait:
+      plugin: "nav2_behaviors::Wait"
+    local_frame: odom
+    global_frame: map
+    robot_base_frame: base_link
+    transform_tolerance: 0.2
+    # Recovery behaviours must respect the same limits as normal driving,
+    # otherwise a recovery spin can exceed the §10 angular cap.
+    simulate_ahead_time: 2.0
+    max_rotational_vel: 1.047
+    min_rotational_vel: 0.3
+    rotational_acc_lim: 2.0
+
+velocity_smoother:
+  ros__parameters:
+    use_sim_time: false
+    smoothing_frequency: 10.0
+    scale_velocities: false
+    feedback: "OPEN_LOOP"
+    # [x, y, theta] — live-overridden by the Tuning Panel (§11).
+    max_velocity: [0.30, 0.0, 1.047]
+    min_velocity: [-0.10, 0.0, -1.047]
+    max_accel: [0.5, 0.0, 2.0]
+    max_decel: [-0.7, 0.0, -2.5]
+    odom_topic: "odom"
+    odom_duration: 0.1
+    deadband_velocity: [0.0, 0.0, 0.0]
+    velocity_timeout: 1.0
+
+collision_monitor:
+  ros__parameters:
+    # §8 lists Nav2's collision monitor as part of collision protection. This
+    # complements — does not replace — the firmware-level collision stop in
+    # §11.2, which keeps working even if this node or the WiFi link dies.
+    use_sim_time: false
+    base_frame_id: "base_link"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "cmd_vel_smoothed"
+    cmd_vel_out_topic: "cmd_vel"
+    state_topic: "collision_monitor_state"
+    transform_tolerance: 0.2
+    source_timeout: 1.0
+    base_shift_correction: true
+    stop_pub_timeout: 2.0
+    polygons: ["stop_zone"]
+    stop_zone:
+      type: "circle"
+      # 0.10 m matches §10's collision_stop_distance_mm = 100 measured from the
+      # robot centre plus its own radius.
+      radius: 0.22
+      action_type: "stop"
+      min_points: 3
+      visualize: true
+      polygon_pub_topic: "stop_zone"
+      enabled: true
+    observation_sources: ["scan"]
+    scan:
+      type: "scan"
+      topic: "/scan"
+      enabled: true
+
+map_saver:
+  ros__parameters:
+    use_sim_time: false
+    save_map_timeout: 5.0
+    free_thresh_default: 0.25
+    occupied_thresh_default: 0.65
+    map_subscribe_transient_local: true
+
+waypoint_follower:
+  ros__parameters:
+    use_sim_time: false
+    loop_rate: 20
+    stop_on_failure: false
+    waypoint_task_executor_plugin: "wait_at_waypoint"
+    wait_at_waypoint:
+      plugin: "nav2_waypoint_follower::WaitAtWaypoint"
+      enabled: true
+      waypoint_pause_duration: 200

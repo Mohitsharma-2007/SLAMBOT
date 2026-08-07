@@ -1,0 +1,9 @@
+# SLAM Bot backend dependencies.
+#
+# Note: rclpy is deliberately NOT listed. It is not pip-installable — it comes
+# from your ROS2 distribution (source /opt/ros/humble/setup.bash or equivalent).
+# The backend detects its absence and runs without ROS2 features.
+fastapi>=0.110
+uvicorn[standard]>=0.27
+httpx>=0.26
+websockets>=12.0
