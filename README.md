@@ -126,8 +126,24 @@ edit them:
 `BACKEND_HOST` must be the backend machine's **LAN IP**, not `localhost` —
 from the MCU's perspective localhost is the MCU itself.
 
-Arduino IDE libraries: `ArduinoHttpClient` + `ArduinoJson` v7 (Uno R4);
-`WebSockets` by Markus Sattler + `ArduinoJson` v7 (ESP8266).
+**Install these before compiling** (Arduino IDE → Tools → Manage Libraries).
+A missing one fails as `fatal error: <header>: No such file or directory`:
+
+| Board | Library | Author | Provides |
+|---|---|---|---|
+| Uno R4 | `ArduinoHttpClient` | Arduino | `WebSocketClient.h` |
+| Uno R4 | `ArduinoJson` v7.x | Benoit Blanchon | `ArduinoJson.h` |
+| NodeMCU | `WebSockets` | **Markus Sattler** | `WebSocketsClient.h` |
+| NodeMCU | `ArduinoJson` v7.x | Benoit Blanchon | `ArduinoJson.h` |
+
+Note the two WebSocket libraries are different and not interchangeable — the
+Uno R4 header is `WebSocketClient.h` (singular), the ESP8266 one is
+`WebSocketsClient.h` (plural). Searching "WebSockets" returns several
+similarly named libraries; the ESP8266 needs Markus Sattler's.
+
+`ESP8266WiFi` and `LittleFS` ship with the ESP8266 board package (Boards
+Manager → `esp8266` by ESP8266 Community); `WiFiS3` and `EEPROM` ship with the
+UNO R4 package.
 
 Per §12 step 2, **flash both boards over USB the traditional way first** to
 confirm the firmware works, before relying on the Flash Center.

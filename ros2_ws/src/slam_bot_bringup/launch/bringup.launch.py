@@ -61,11 +61,16 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument(
             "backend_url", default_value="ws://127.0.0.1:8000/ws/app"
         ),
+        DeclareLaunchArgument(
+            "relay_url", default_value="ws://127.0.0.1:8000/ws/relay"
+        ),
         DeclareLaunchArgument("laser_offset_x", default_value="0.0"),
         DeclareLaunchArgument("laser_offset_y", default_value="0.0"),
         DeclareLaunchArgument("laser_offset_z", default_value="0.0"),
         DeclareLaunchArgument("laser_offset_yaw", default_value="0.0"),
     ]
+
+    relay_url = LaunchConfiguration("relay_url")
 
     # --- static TF base_link -> laser (§7) ---------------------------------
     # Published unconditionally: slam_toolbox cannot transform scans without it,
@@ -114,7 +119,7 @@ def generate_launch_description() -> LaunchDescription:
                 executable="web_relay",
                 name="slam_bot_web_relay",
                 output="screen",
-                parameters=[{"backend_url": "ws://127.0.0.1:8000/ws/relay"}],
+                parameters=[{"backend_url": relay_url}],
             ),
         ],
     )

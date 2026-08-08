@@ -110,6 +110,16 @@ static const uint32_t CONFIG_MAGIC   = 0x53424D31UL;  // "SBM1"
 static const uint16_t CONFIG_VERSION = 2;
 static const int      EEPROM_ADDR    = 0;
 
+// Per-wheel state for checkWheelSignSanity(). Declared up here because the
+// IDE's auto-generated prototypes are emitted above the first function, and a
+// struct used in a signature must already be a complete type by then.
+struct WheelSignCheck {
+  uint32_t badSinceMs = 0;
+  bool     reported   = false;
+};
+
+void logToBackend(const char* level, const String& msg);   // defined below
+
 struct RuntimeConfig {
   uint32_t magic   = CONFIG_MAGIC;
   uint16_t version = CONFIG_VERSION;
@@ -197,9 +207,21 @@ void isrLeft() {
 }
 
 void isrRight() {
+  // Same sign convention as the left wheel: ticks count UP when the wheel
+  // rolls the robot forward.
+  //
+  // This used to be negated "because the right motor faces the opposite way".
+  // That was wrong, and it made the robot spin instead of drive: the reversed
+  // motor leads were already being corrected by config.invert_right on the
+  // duty, so negating here corrected the same physical fact a second time.
+  // The result was inverted feedback on the right wheel's velocity PID —
+  // driving harder made the measured error grow, so it saturated at full
+  // reverse while the left wheel drove forward. Reversed leads are an OUTPUT
+  // concern (invert_right); encoder sign is an INPUT concern and must stay
+  // positive-when-forward or odometry integrates backwards.
   bool a = digitalRead(PIN_ENC_R_A);
   bool b = digitalRead(PIN_ENC_R_B);
-  encRightTicks += (a == b) ? -1 : 1;   // mirrored: right motor faces opposite
+  encRightTicks += (a == b) ? 1 : -1;
 }
 
 // ---------------------------------------------------------------------------
@@ -230,9 +252,12 @@ void motorsCoast() {
 // still has to have its encoder counting positive when the robot moves
 // forward, otherwise the velocity loop sees the error growing as it corrects
 // and runs away. Flipping only the final duty keeps the loop's sign
-// convention intact; the encoder sign is a separate concern handled in the
-// ISRs. On this chassis the right motor's leads are reversed, hence the
-// invert_right default of true.
+// convention intact.
+//
+// This is the ONLY place a reversed motor is compensated. Do not also negate
+// the encoder in the ISR — doing both cancels out into inverted feedback and
+// the robot spins in place instead of driving. checkWheelSignSanity() below
+// exists to catch exactly that mistake at runtime.
 //
 // floorDuty is the kickstart: while it is non-zero, a wheel that is being
 // asked to move at all gets at least that much duty. Zero commands stay zero
@@ -244,6 +269,46 @@ int applyWheelCal(float pidOut, bool invert, float floorDuty) {
   }
   if (invert) d = -d;
   return (int)d;
+}
+
+// ---------------------------------------------------------------------------
+// Wheel sign sanity check
+//
+// A wheel being driven one way while its encoder reports motion the other way
+// means the duty sign and the feedback sign disagree — either invert_* is set
+// wrong for this chassis, or the encoder A/B leads are swapped. Left
+// unreported this is nasty to diagnose, because the closed loop turns it into
+// "the robot spins when I press forward" rather than anything that names a
+// wheel.
+//
+// Reported, not corrected: auto-flipping a sign would hide a wiring fault and
+// could invert steering on a robot that was driving fine a moment ago. A
+// stalled wheel reads zero velocity and is not a disagreement, so the check
+// needs real measured motion before it will complain.
+WheelSignCheck signCheckLeft, signCheckRight;
+
+void checkWheelSignSanity(WheelSignCheck& st, int duty, float measMmS,
+                          const char* wheel, const char* configKey) {
+  const int   MIN_DUTY = 40;     // below this the wheel may not be moving yet
+  const float MIN_VEL  = 15.0f;  // mm/s; under this is noise or a stall
+  const uint32_t GRACE_MS = 1000;
+
+  bool disagrees = (abs(duty) >= MIN_DUTY) && (fabsf(measMmS) >= MIN_VEL) &&
+                   ((duty > 0) != (measMmS > 0.0f));
+
+  if (!disagrees) {
+    st.badSinceMs = 0;
+    st.reported   = false;
+    return;
+  }
+  if (st.badSinceMs == 0) { st.badSinceMs = millis(); return; }
+  if (st.reported || (millis() - st.badSinceMs) < GRACE_MS) return;
+
+  st.reported = true;
+  logToBackend("error", String("wheel ") + wheel +
+               ": duty and encoder disagree in sign for 1 s (duty " + duty +
+               ", measured " + (int)measMmS + " mm/s). Check " + configKey +
+               " or the encoder A/B leads. Odometry and steering will be wrong.");
 }
 
 // ---------------------------------------------------------------------------
@@ -300,6 +365,66 @@ WiFiClient      wifiClient;
 WebSocketClient ws(wifiClient, BACKEND_HOST, BACKEND_PORT);
 bool wsConnected = false;
 
+// ---------------------------------------------------------------------------
+// Frame sending — DO NOT use ws.beginMessage()/print()/endMessage() here
+//
+// ArduinoHttpClient 0.6.1 buffers an entire outgoing frame in a 128-byte array
+// (WS_TX_BUFFER_SIZE) and its overflow guard is buggy:
+//
+//     if ((iTxSize + aSize) > sizeof(iTxBuffer))
+//         aSize = sizeof(iTxSize) - iTxSize;      // sizeof(iTxSize), not iTxBuffer
+//
+// iTxSize is a uint64_t, so that clamps the write to 8 bytes. Every odom frame
+// (~200 bytes) therefore reached the backend as the literal string '{"type":'
+// and was logged as "non-JSON from Arduino" — which starved the ROS bridge of
+// odometry, so no odom->base_link TF was published, so slam_toolbox never
+// produced a map frame, and every Nav2 costmap failed on a missing transform.
+//
+// WS_TX_BUFFER_SIZE cannot be raised from the sketch: build_opt.h does not
+// reach library translation units (verified — RAM usage was unchanged), and a
+// sketch-local #define would give the sketch and the library different ideas
+// of the struct layout, which is worse than the original bug.
+//
+// So we write the frame to the TCP socket directly. A client-to-server frame
+// must be masked (RFC 6455 §5.3); the mask key is obfuscation, not security,
+// and does not need to be cryptographically random.
+void wsSendText(const String& payload) {
+  if (!wsConnected) return;
+
+  size_t len = payload.length();
+  uint8_t header[8];
+  size_t  h = 0;
+  header[h++] = 0x81;                    // FIN + opcode 0x1 (text)
+
+  if (len < 126) {
+    header[h++] = 0x80 | (uint8_t)len;   // MASK bit + 7-bit length
+  } else if (len < 65536) {
+    header[h++] = 0x80 | 126;            // MASK bit + 16-bit extended length
+    header[h++] = (len >> 8) & 0xFF;
+    header[h++] = len & 0xFF;
+  } else {
+    return;                              // never happens; a frame this big is a bug
+  }
+
+  uint8_t mask[4];
+  for (uint8_t i = 0; i < 4; i++) mask[i] = (uint8_t)random(0, 256);
+
+  wifiClient.write(header, h);
+  wifiClient.write(mask, 4);
+
+  // Mask and send in blocks so we never need a full-size copy of the payload.
+  uint8_t buf[64];
+  size_t  sent = 0;
+  while (sent < len) {
+    size_t n = min((size_t)sizeof(buf), len - sent);
+    for (size_t i = 0; i < n; i++) {
+      buf[i] = (uint8_t)payload[sent + i] ^ mask[(sent + i) & 3];
+    }
+    if (wifiClient.write(buf, n) != n) { wsConnected = false; return; }
+    sent += n;
+  }
+}
+
 void logToBackend(const char* level, const String& msg) {
   if (!wsConnected) return;
   JsonDocument doc;
@@ -309,9 +434,7 @@ void logToBackend(const char* level, const String& msg) {
   doc["msg"]    = msg;
   String out;
   serializeJson(doc, out);
-  ws.beginMessage(TYPE_TEXT);
-  ws.print(out);
-  ws.endMessage();
+  wsSendText(out);
 }
 
 void ensureWiFi() {
@@ -355,9 +478,7 @@ void ensureWebSocket() {
     cfg["running"]            = config.running;
     String out;
     serializeJson(doc, out);
-    ws.beginMessage(TYPE_TEXT);
-    ws.print(out);
-    ws.endMessage();
+    wsSendText(out);
   }
 }
 
@@ -426,9 +547,7 @@ void sendAck(const char* what, bool ok) {
   doc["ok"]   = ok;
   String out;
   serializeJson(doc, out);
-  ws.beginMessage(TYPE_TEXT);
-  ws.print(out);
-  ws.endMessage();
+  wsSendText(out);
 }
 
 void handleMessage(const String& payload) {
@@ -604,6 +723,7 @@ void controlStep(float dt) {
     dutyLeft = dutyRight = 0;
     kickUntilMs = 0;
     wheelsIdle  = true;
+    signCheckLeft = signCheckRight = WheelSignCheck();
     motorsCoast();
     return;
   }
@@ -618,6 +738,7 @@ void controlStep(float dt) {
     dutyLeft = dutyRight = 0;
     kickUntilMs = 0;
     wheelsIdle  = true;
+    signCheckLeft = signCheckRight = WheelSignCheck();
     motorsCoast();
     return;
   }
@@ -640,6 +761,12 @@ void controlStep(float dt) {
   dutyRight = applyWheelCal(outRight, config.invert_right, floorDuty);
   writeMotor(PIN_AIN1, PIN_AIN2, dutyLeft);
   writeMotor(PIN_BIN1, PIN_BIN2, dutyRight);
+
+  // Compare what we commanded against what the wheels actually did.
+  checkWheelSignSanity(signCheckLeft,  dutyLeft,  measLeftMmS,
+                       "L", "invert_left");
+  checkWheelSignSanity(signCheckRight, dutyRight, measRightMmS,
+                       "R", "invert_right");
 }
 
 // ---------------------------------------------------------------------------
@@ -680,9 +807,7 @@ void sendOdom() {
 
   String out;
   serializeJson(doc, out);
-  ws.beginMessage(TYPE_TEXT);
-  ws.print(out);
-  ws.endMessage();
+  wsSendText(out);
 }
 
 // ---------------------------------------------------------------------------

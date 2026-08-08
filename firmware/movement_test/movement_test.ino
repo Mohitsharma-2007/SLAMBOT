@@ -454,7 +454,14 @@ void sendJson(WiFiClient& c) {
             "Cache-Control: no-store\r\nConnection: close\r\nContent-Length: "));
   c.print(body.length());
   c.print(F("\r\n\r\n"));
-  c.print(body);
+  c.print(Hey When I am Compling the Code of nodemcu in Ardiuno IDE , I am receiving this error fix this immediately or tell me the fix : 
+D:\SLAM Bot\firmware\nodemcu_lidar\nodemcu_lidar.ino:35:10: fatal error: WebSocketsClient.h: No such file or directory
+   35 | #include <WebSocketsClient.h>
+      |          ^~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+exit status 1
+
+Compilation error: WebSocketsClient.h: No such file or directorybody);
 }
 
 // Send the control page in small chunks.

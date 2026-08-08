@@ -289,12 +289,34 @@ uint16_t droppedThisRev = 0;
 uint32_t revStartMs     = 0;
 uint32_t revCounter     = 0;
 
+// Per-revolution diagnostics.
+//
+// "n = 0 samples every revolution" is indistinguishable at the backend from a
+// dead LIDAR, a mis-synced parser, or a filter that happens to reject
+// everything — all three look like silence. Counting each rejection reason
+// separately turns that one ambiguous symptom into a specific answer, and
+// costs a handful of increments per packet.
+struct ScanDiag {
+  uint16_t packets    = 0;  // 5-byte packets that passed the checksum bits
+  uint16_t badFrame   = 0;  // failed check-bit / start-flag validation
+  uint16_t rejQuality = 0;  // quality < min_quality
+  uint16_t rejZero    = 0;  // distance 0 == no return
+  uint16_t rejNear    = 0;  // closer than lidar_min_range_mm
+  uint16_t rejFar     = 0;  // further than lidar_max_range_mm
+  uint16_t rejAngle   = 0;  // outside 0..360 or inside an angle mask
+  uint8_t  maxQuality = 0;  // best quality seen — 0 means nothing is returning
+};
+ScanDiag diag;
+
 // Smallest in-range return of the revolution — the backend forwards this to
 // the Arduino so collision-stop can act on it (§10 collision_stop_distance_mm).
 uint16_t minDistThisRev = 0xFFFF;
 
 void publishRevolution() {
-  if (!wsConnected) { sampleCount = 0; droppedThisRev = 0; return; }
+  if (!wsConnected) {
+    sampleCount = 0; droppedThisRev = 0; diag = ScanDiag();
+    return;
+  }
 
   uint32_t now  = millis();
   uint32_t dtMs = (revStartMs == 0) ? 0 : (now - revStartMs);
@@ -313,6 +335,22 @@ void publishRevolution() {
   doc["max_range_mm"] = config.lidar_max_range_mm;
   if (minDistThisRev != 0xFFFF) doc["min_distance_mm"] = minDistThisRev;
 
+  // Only attached when the revolution yielded nothing. A healthy scan does not
+  // need to carry its own post-mortem, and at ~5.5 Hz the extra bytes would be
+  // pure overhead; when n == 0 this is the only evidence of why.
+  if (sampleCount == 0) {
+    JsonObject d = doc["diag"].to<JsonObject>();
+    d["packets"]     = diag.packets;
+    d["bad_frame"]   = diag.badFrame;
+    d["rej_quality"] = diag.rejQuality;
+    d["rej_zero"]    = diag.rejZero;
+    d["rej_near"]    = diag.rejNear;
+    d["rej_far"]     = diag.rejFar;
+    d["rej_angle"]   = diag.rejAngle;
+    d["max_quality"] = diag.maxQuality;
+    d["min_quality_cfg"] = config.min_quality;
+  }
+
   JsonArray aArr = doc["angles_deg"].to<JsonArray>();
   JsonArray dArr = doc["dists_mm"].to<JsonArray>();
   JsonArray qArr = doc["quality"].to<JsonArray>();
@@ -330,6 +368,7 @@ void publishRevolution() {
   sampleCount    = 0;
   droppedThisRev = 0;
   minDistThisRev = 0xFFFF;
+  diag           = ScanDiag();
 }
 
 // 5-byte packet: [S !S Q(6)] [Aq[6:0] C=1] [Aq[14:7]] [Dist_L] [Dist_H]
@@ -344,8 +383,10 @@ void processPacket() {
   uint8_t quality      = b0 >> 2;
 
   // The check bit of byte 1 must be 1 on a valid packet.
-  if ((pktBuf[1] & 0x01) != 0x01) { synced = false; return; }
-  if (startFlag == invStartFlag)  { synced = false; return; }
+  if ((pktBuf[1] & 0x01) != 0x01) { diag.badFrame++; synced = false; return; }
+  if (startFlag == invStartFlag)  { diag.badFrame++; synced = false; return; }
+  diag.packets++;
+  if (quality > diag.maxQuality) diag.maxQuality = quality;
 
   float    angleDeg = (float)(((uint16_t)(pktBuf[2]) << 7) | (pktBuf[1] >> 1)) / 64.0f;
   uint16_t distMm   = (uint16_t)((((uint16_t)pktBuf[4]) << 8) | pktBuf[3]) / 4;
@@ -353,12 +394,12 @@ void processPacket() {
   if (startFlag) publishRevolution();   // new revolution begins at this sample
 
   // --- filtering, from the live runtime config ---------------------------
-  if (quality < config.min_quality)          return;
-  if (distMm == 0)                           return;  // no valid return
-  if (distMm < config.lidar_min_range_mm)    return;
-  if (distMm > config.lidar_max_range_mm)    return;
-  if (angleDeg < 0.0f || angleDeg >= 360.0f) return;
-  if (angleMasked(angleDeg))                 return;
+  if (quality < config.min_quality)       { diag.rejQuality++; return; }
+  if (distMm == 0)                        { diag.rejZero++;    return; }
+  if (distMm < config.lidar_min_range_mm) { diag.rejNear++;    return; }
+  if (distMm > config.lidar_max_range_mm) { diag.rejFar++;     return; }
+  if (angleDeg < 0.0f || angleDeg >= 360.0f) { diag.rejAngle++; return; }
+  if (angleMasked(angleDeg))                 { diag.rejAngle++; return; }
 
   if (distMm < minDistThisRev) minDistThisRev = distMm;
 
@@ -405,16 +446,17 @@ uint32_t lastLidarRestartMs = 0;
 uint32_t lastSampleSeenMs   = 0;
 
 void setup() {
-  // UART is the LIDAR link, not a debug console. 115200 8N1 per §3.
-  Serial.begin(LIDAR_BAUD);
-  Serial.setRxBufferSize(1024);
-
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-  uint32_t deadline = millis() + 15000;
+  uint32_t deadline = millis() + 20000;
   while (WiFi.status() != WL_CONNECTED && millis() < deadline) {
-    delay(200);
+    delay(100);
+    yield();
   }
+
+  // UART is the LIDAR link, initialized AFTER WiFi connects.
+  Serial.begin(LIDAR_BAUD);
+  Serial.setRxBufferSize(1024);
 
   LittleFS.begin();
   loadConfig();

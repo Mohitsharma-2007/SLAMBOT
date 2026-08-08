@@ -86,6 +86,11 @@ class RobotLinks:
 
 LINKS = RobotLinks()
 
+# Timestamp of the last empty-scan diagnostic, so the 5.5 Hz scan stream cannot
+# flood the log ring. Single-element list rather than a module global purely to
+# keep the mutation local to the handler that owns it.
+_LAST_SCAN_DIAG_MS = [0]
+
 
 # ---------------------------------------------------------------------------
 # Downlink helpers — used by ws_frontend, ros_bridge and the REST routes
@@ -396,6 +401,35 @@ async def _handle_nodemcu_message(raw: str) -> None:
                     "warn",
                     f"scan {scan.seq}: dropped {scan.dropped} samples (buffer full)",
                 )
+
+            # An empty revolution carries a breakdown of why. Surface it, but
+            # rate-limited: at ~5.5 Hz an unconditional log would bury every
+            # other message within seconds — the Arduino truncation bug filled
+            # the ring buffer with ~2000 identical warnings in exactly that way.
+            diag = msg.get("diag")
+            if isinstance(diag, dict) and n == 0:
+                last = _LAST_SCAN_DIAG_MS[0]
+                if now_ms() - last > 5000:
+                    _LAST_SCAN_DIAG_MS[0] = now_ms()
+                    packets = int(diag.get("packets", 0))
+                    if packets == 0:
+                        detail = (
+                            "no valid packets parsed "
+                            f"(bad_frame={diag.get('bad_frame', 0)}) — LIDAR "
+                            "not spinning, TX/RX not crossed, or baud mismatch"
+                        )
+                    else:
+                        detail = (
+                            f"{packets} packets parsed but every sample "
+                            f"filtered: quality={diag.get('rej_quality', 0)} "
+                            f"zero={diag.get('rej_zero', 0)} "
+                            f"near={diag.get('rej_near', 0)} "
+                            f"far={diag.get('rej_far', 0)} "
+                            f"angle={diag.get('rej_angle', 0)} "
+                            f"(best quality seen {diag.get('max_quality', 0)}, "
+                            f"min_quality={diag.get('min_quality_cfg', '?')})"
+                        )
+                    STATE.logs.emit("lidar", "error", f"scan empty: {detail}")
 
         elif kind == "hello":
             STATE.nodemcu.firmware = str(msg.get("fw", "unknown"))
