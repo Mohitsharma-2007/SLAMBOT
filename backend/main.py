@@ -365,12 +365,30 @@ async def _startup() -> None:
                 "ai", "warn", f"AI unavailable: {ADVISOR.last_error}"
             )
 
+async def _udp_beacon_loop() -> None:
+    """Broadcasts a discovery beacon on LAN UDP port 8888 so phone apps auto-discover the host."""
+    import socket
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.setblocking(False)
+        payload = json.dumps({"service": "slambot_server", "port": SETTINGS.port}).encode("utf-8")
+        while True:
+            try:
+                sock.sendto(payload, ("255.255.255.255", 8888))
+            except Exception:
+                pass
+            await asyncio.sleep(2.0)
+    except Exception as exc:
+        logger.info("UDP beacon disabled: %s", exc)
+
     BACKGROUND_TASKS.extend(
         [
             asyncio.create_task(ws_robot.control_loop(), name="control-loop"),
             asyncio.create_task(ws_robot.presence_loop(), name="presence-loop"),
             asyncio.create_task(ws_frontend.status_loop(), name="status-loop"),
             asyncio.create_task(ws_frontend.map_loop(), name="map-loop"),
+            asyncio.create_task(_udp_beacon_loop(), name="udp-beacon-loop"),
         ]
     )
     logger.info("backend ready on %s:%s", SETTINGS.host, SETTINGS.port)
@@ -482,4 +500,5 @@ if __name__ == "__main__":
         port=SETTINGS.port,
         reload=False,
         log_level="info",
+        ws="wsproto",
     )

@@ -17,7 +17,40 @@ export default defineConfig({
     proxy: {
       '/api': { target: BACKEND, changeOrigin: true },
       '/healthz': { target: BACKEND, changeOrigin: true },
-      '/ws': { target: BACKEND_WS, ws: true },
+      '/ws': {
+        target: BACKEND_WS,
+        ws: true,
+        configure: (proxy) => {
+          // Wrap in process.nextTick because Vite attaches its own default error
+          // listener AFTER the configure hook runs.
+          process.nextTick(() => {
+            proxy.removeAllListeners('error');
+            
+            proxy.on('error', (err, req, res) => {
+              if (
+                err.code === 'ECONNRESET' || 
+                err.code === 'ECONNABORTED' || 
+                err.code === 'ETIMEDOUT'
+              ) {
+                return;
+              }
+              console.error('[vite] ws proxy error:', err.message || err);
+            });
+          });
+
+          proxy.on('proxyReqWs', (proxyReq, req, socket) => {
+            socket.on('error', (err) => {
+              if (
+                err.code === 'ECONNRESET' || 
+                err.code === 'ECONNABORTED' || 
+                err.code === 'ETIMEDOUT'
+              ) {
+                return;
+              }
+            });
+          });
+        },
+      },
     },
   },
   build: {

@@ -30,6 +30,7 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description() -> LaunchDescription:
     use_nav2 = LaunchConfiguration("use_nav2")
     use_slam = LaunchConfiguration("use_slam")
+    use_explore = LaunchConfiguration("use_explore")
     standalone_bridge = LaunchConfiguration("standalone_bridge")
     autostart = LaunchConfiguration("autostart")
     backend_url = LaunchConfiguration("backend_url")
@@ -48,6 +49,7 @@ def generate_launch_description() -> LaunchDescription:
     declarations = [
         DeclareLaunchArgument("use_nav2", default_value="true"),
         DeclareLaunchArgument("use_slam", default_value="true"),
+        DeclareLaunchArgument("use_explore", default_value="true", description="Start autonomous frontier exploration node"),
         DeclareLaunchArgument(
             "standalone_bridge",
             default_value="false",
@@ -207,6 +209,20 @@ def generate_launch_description() -> LaunchDescription:
         ],
     )
 
+    # --- Autonomous Frontier Explorer -------------------------------------
+    explore_group = GroupAction(
+        condition=IfCondition(use_explore),
+        actions=[
+            LogInfo(msg="Starting Autonomous Frontier Exploration (slam_bot_bridge)"),
+            Node(
+                package="slam_bot_bridge",
+                executable="explore_node",
+                name="slam_bot_explore",
+                output="screen",
+            ),
+        ],
+    )
+
     return LaunchDescription(
         [
             *declarations,
@@ -221,5 +237,6 @@ def generate_launch_description() -> LaunchDescription:
             bridge_group,
             slam,
             nav2_group,
+            explore_group,
         ]
     )

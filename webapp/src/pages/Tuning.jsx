@@ -191,7 +191,146 @@ export default function Tuning() {
     arduino,
     nodemcu,
     lastReply,
+    status,
+    start,
+    stop,
+    drive,
   } = useBot()
+
+  const [calState, setCalState] = useState({
+    active: null, // 'left', 'right', 'ccw', null
+    ticksStart: { l: 0, r: 0 },
+    thetaStart: 0,
+    elapsed: 0,
+    ticksDelta: { l: 0, r: 0 },
+    thetaDelta: 0,
+    result: null,
+    resultColor: 'info',
+  })
+
+  const runTest = useCallback((testType) => {
+    if (!connected) return
+    
+    // 1. Arm robot if stopped
+    if (!status?.running) {
+      start()
+    }
+    
+    const initialTicksL = status?.odom?.ticks_l ?? 0
+    const initialTicksR = status?.odom?.ticks_r ?? 0
+    const initialTheta = status?.odom?.theta_rad ?? 0
+    
+    setCalState({
+      active: testType,
+      ticksStart: { l: initialTicksL, r: initialTicksR },
+      thetaStart: initialTheta,
+      elapsed: 0,
+      ticksDelta: { l: 0, r: 0 },
+      thetaDelta: 0,
+      result: 'Test in progress... Keep clear of wheels!',
+      resultColor: 'info',
+    })
+    
+    let count = 0
+    const interval = setInterval(() => {
+      count += 1
+      
+      let lin = 0
+      let ang = 0
+      
+      if (testType === 'left') {
+        // Run left wheel forward
+        lin = 25
+        ang = -19000
+      } else if (testType === 'right') {
+        // Run right wheel forward
+        lin = 25
+        ang = 19000
+      } else if (testType === 'ccw') {
+        // Spin CCW (left backward, right forward)
+        lin = 0
+        ang = 25000
+      }
+      
+      drive(lin, ang)
+      
+      // Read current values
+      const curL = status?.odom?.ticks_l ?? 0
+      const curR = status?.odom?.ticks_r ?? 0
+      const curTheta = status?.odom?.theta_rad ?? 0
+      
+      setCalState(prev => ({
+        ...prev,
+        elapsed: count * 100,
+        ticksDelta: { l: curL - prev.ticksStart.l, r: curR - prev.ticksStart.r },
+        thetaDelta: curTheta - prev.thetaStart,
+      }))
+      
+      if (count >= 12) { // 1.2s done
+        clearInterval(interval)
+        drive(0, 0)
+        
+        setTimeout(() => {
+          const finalL = status?.odom?.ticks_l ?? 0
+          const finalR = status?.odom?.ticks_r ?? 0
+          const finalTheta = status?.odom?.theta_rad ?? 0
+          
+          const deltaL = finalL - initialTicksL
+          const deltaR = finalR - initialTicksR
+          
+          let dTheta = finalTheta - initialTheta
+          while (dTheta > Math.PI) dTheta -= 2 * Math.PI
+          while (dTheta < -Math.PI) dTheta += 2 * Math.PI
+          const dThetaDeg = dTheta * 180 / Math.PI
+          
+          let resultText = ''
+          let statusColor = 'info'
+          
+          if (testType === 'left') {
+            if (deltaL > 30) {
+              resultText = `Success: Left wheel counts positive (${deltaL} ticks). Left motor/encoder direction is correct!`
+              statusColor = 'ok'
+            } else if (deltaL < -30) {
+              resultText = `Warning: Left wheel counts negative (${deltaL} ticks). Recommended: set "invert_left" parameter below to 1 to align feedback, or swap encoder A/B wires.`
+              statusColor = 'warn'
+            } else {
+              resultText = `Error: Left wheel did not move enough (${deltaL} ticks). Verify motor power and configuration.`
+              statusColor = 'err'
+            }
+          } else if (testType === 'right') {
+            if (deltaR > 30) {
+              resultText = `Success: Right wheel counts positive (${deltaR} ticks). Right motor/encoder direction is correct!`
+              statusColor = 'ok'
+            } else if (deltaR < -30) {
+              resultText = `Warning: Right wheel counts negative (${deltaR} ticks). Recommended: set "invert_right" parameter below to 1 to align feedback, or swap encoder A/B wires.`
+              statusColor = 'warn'
+            } else {
+              resultText = `Error: Right wheel did not move enough (${deltaR} ticks). Verify motor power and configuration.`
+              statusColor = 'err'
+            }
+          } else if (testType === 'ccw') {
+            if (dThetaDeg > 10) {
+              resultText = `Success: Robot rotated CCW and Heading increased (+${dThetaDeg.toFixed(1)}°). Yaw integration is correctly aligned with ROS standard!`
+              statusColor = 'ok'
+            } else if (dThetaDeg < -10) {
+              resultText = `Warning: Heading decreased (-${Math.abs(dThetaDeg).toFixed(1)}°). Yaw is integrating backwards. Recommended: swap encoder A/B channels or check wheel spacing configuration.`
+              statusColor = 'warn'
+            } else {
+              resultText = `Error: Robot did not turn enough (${dThetaDeg.toFixed(1)}°). Verify wheel traction.`
+              statusColor = 'err'
+            }
+          }
+          
+          setCalState(prev => ({
+            ...prev,
+            active: null,
+            result: resultText,
+            resultColor: statusColor,
+          }))
+        }, 100)
+      }
+    }, 100)
+  }, [connected, status, start, drive])
 
   // Optimistic local values so sliders track the pointer while the round trip
   // to the backend completes.
@@ -331,6 +470,82 @@ export default function Tuning() {
             {lastReply.msg}
           </div>
         )}
+      </div>
+
+      <div className="panel" style={{ border: '1px solid var(--accent-dim)' }}>
+        <div className="panel-title" style={{ color: 'var(--accent)' }}>
+          Odometry Direction & Calibration Assistant
+        </div>
+        <div className="param-help" style={{ marginBottom: 12 }}>
+          Align and verify your robot's coordinate systems with ROS (Forward motion increases X; Counter-Clockwise rotation increases Yaw angle θ).
+        </div>
+        
+        {/* Live Values Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 14 }}>
+          <div className="stat">
+            <div className="stat-label">Left Wheel Ticks</div>
+            <div className="stat-value">{status?.odom?.ticks_l ?? 0}</div>
+          </div>
+          <div className="stat">
+            <div className="stat-label">Right Wheel Ticks</div>
+            <div className="stat-value">{status?.odom?.ticks_r ?? 0}</div>
+          </div>
+          <div className="stat">
+            <div className="stat-label">Yaw Angle (θ)</div>
+            <div className="stat-value">
+              {status?.odom?.theta_rad ? (status.odom.theta_rad * 180 / Math.PI).toFixed(1) : '0.0'}
+              <span className="stat-unit">°</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Diagnostic Actions */}
+        <div className="row" style={{ gap: 10, marginBottom: 14 }}>
+          <button 
+            onClick={() => runTest('left')} 
+            disabled={calState.active !== null || !connected}
+            className={calState.active === 'left' ? 'primary' : ''}
+          >
+            {calState.active === 'left' ? 'Testing Left...' : 'Test Left Motor'}
+          </button>
+          <button 
+            onClick={() => runTest('right')} 
+            disabled={calState.active !== null || !connected}
+            className={calState.active === 'right' ? 'primary' : ''}
+          >
+            {calState.active === 'right' ? 'Testing Right...' : 'Test Right Motor'}
+          </button>
+          <button 
+            onClick={() => runTest('ccw')} 
+            disabled={calState.active !== null || !connected}
+            className={calState.active === 'ccw' ? 'primary' : ''}
+          >
+            {calState.active === 'ccw' ? 'Testing Spin...' : 'Test CCW Rotation'}
+          </button>
+        </div>
+
+        {/* Live Diagnostics Log / Status */}
+        {calState.result && (
+          <div className={`notice ${calState.resultColor || 'info'}`} style={{ marginTop: 10, marginBottom: 10 }}>
+            <strong>Calibration Status:</strong>
+            <div>{calState.result}</div>
+            {calState.active && (
+              <div style={{ marginTop: 6, fontSize: '11px', opacity: 0.8 }}>
+                Progress: {calState.elapsed}ms | Left Ticks Δ: {calState.ticksDelta.l} | Right Ticks Δ: {calState.ticksDelta.r} | Yaw Δ: {(calState.thetaDelta * 180 / Math.PI).toFixed(1)}°
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick Help Reference */}
+        <div style={{ marginTop: 12, borderTop: '1px solid var(--border)', paddingTop: 10 }}>
+          <div className="sub-title" style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Manual Alignment Checklist</div>
+          <ul className="rules" style={{ fontSize: '12px', marginTop: 4, paddingLeft: 16 }}>
+            <li><strong>Roll Forward manually:</strong> Check that ticks count UP (both Left and Right). If they count down, the encoder leads for that wheel are swapped.</li>
+            <li><strong>Rotate Left manually:</strong> Check that Yaw angle integrates positively. If it goes negative, the relative coordinate system is inverted.</li>
+            <li><strong>Motor direction:</strong> If wheels drive backwards when commanded forward, toggle the "Invert Left Motor" or "Invert Right Motor" parameters below to 1.</li>
+          </ul>
+        </div>
       </div>
 
       {bySection.map(({ section, params }) => (

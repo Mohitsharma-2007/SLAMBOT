@@ -1,0 +1,15 @@
+explore_node:
+  ros__parameters:
+    # Frame names
+    robot_base_frame: base_link
+    costmap_topic: map
+    costmap_updates_topic: map_updates
+    
+    # Exploration tuning
+    visualize: true
+    planner_frequency: 0.33  # Re-plan target every 3 seconds
+    progress_timeout: 30.0   # If stuck for 30s, pick another frontier
+    potential_scale: 1e-3    # Weight for distance cost
+    orientation_scale: 0.0   # Weight for heading
+    gain_scale: 1.0          # Weight for size of unknown space
+    min_frontier_size: 0.5   # Exclude tiny gaps

@@ -195,13 +195,13 @@ async def ws_motion(ws: WebSocket) -> None:
         link.alive = False
         if LINKS.arduino is link:
             LINKS.arduino = None
-        async with STATE.lock:
-            STATE.arduino.connected = False
-            # Losing the motion link means we can no longer command a stop, so
-            # the backend's own view must go to Stopped too. The firmware's 2 s
-            # watchdog independently does the same thing on its side (§11.2).
-            STATE.set_running(False)
-            STATE.logs.emit("motion", "warn", "Arduino disconnected")
+            async with STATE.lock:
+                STATE.arduino.connected = False
+                # Losing the motion link means we can no longer command a stop, so
+                # the backend's own view must go to Stopped too. The firmware's 2 s
+                # watchdog independently does the same thing on its side (§11.2).
+                STATE.set_running(False)
+                STATE.logs.emit("motion", "warn", "Arduino disconnected")
 
 
 async def _handle_arduino_message(raw: str) -> None:
@@ -215,8 +215,10 @@ async def _handle_arduino_message(raw: str) -> None:
         return
 
     kind = msg.get("type")
+    odom_payload: dict[str, Any] | None = None
 
     async with STATE.lock:
+        STATE.arduino.connected = True
         STATE.arduino.last_message_ms = now_ms()
         STATE.arduino.messages_received += 1
 
@@ -273,6 +275,7 @@ async def _handle_arduino_message(raw: str) -> None:
                 linear_m_s=odom.linear_mm_s / 1000.0,
                 angular_rad_s=(odom.angular_mdeg_s / 1000.0) * 0.017453292519943295,
             )
+            odom_payload = odom.snapshot()
 
         elif kind == "hello":
             STATE.arduino.firmware = str(msg.get("fw", "unknown"))
@@ -302,6 +305,14 @@ async def _handle_arduino_message(raw: str) -> None:
                 for name in tuning.split_by_target(STATE.tuning)["arduino"]:
                     STATE.tuning_saved[name] = STATE.tuning[name]
                 STATE.logs.emit("motion", "info", "Arduino saved config to EEPROM")
+
+    # Outside the lock. The standalone ROS bridge is a /ws/app client, so this
+    # is how odometry reaches slam_toolbox at the Arduino's full 20 Hz. Relying
+    # on the 5 Hz status loop instead starved the scan matcher of a motion prior
+    # and left odom->base_link TF too sparse for the scan timestamps to
+    # interpolate against, which is a direct cause of a smeared map.
+    if odom_payload is not None:
+        HUB.broadcast("odom", odom_payload)
 
     # Only on `hello` — a re-sync means "this device just booted, push it the
     # operator's values". Doing it on every ack would echo a full tuning frame
@@ -346,9 +357,9 @@ async def ws_lidar(ws: WebSocket) -> None:
         link.alive = False
         if LINKS.nodemcu is link:
             LINKS.nodemcu = None
-        async with STATE.lock:
-            STATE.nodemcu.connected = False
-            STATE.logs.emit("lidar", "warn", "NodeMCU disconnected")
+            async with STATE.lock:
+                STATE.nodemcu.connected = False
+                STATE.logs.emit("lidar", "warn", "NodeMCU disconnected")
 
 
 async def _handle_nodemcu_message(raw: str) -> None:
@@ -366,6 +377,7 @@ async def _handle_nodemcu_message(raw: str) -> None:
     scan_payload: dict[str, Any] | None = None
 
     async with STATE.lock:
+        STATE.nodemcu.connected = True
         STATE.nodemcu.last_message_ms = now_ms()
         STATE.nodemcu.messages_received += 1
 
@@ -554,10 +566,15 @@ async def control_loop() -> None:
 
             if mode == "nav2":
                 from ros_bridge import BRIDGE
-
-                nav_lin, nav_ang = BRIDGE.latest_cmd_vel()
-                linear_mm_s = nav_lin * 1000.0
-                angular_mdeg_s = nav_ang * 57295.77951308232  # rad/s -> mdeg/s
+                if BRIDGE.available:
+                    nav_lin, nav_ang = BRIDGE.latest_cmd_vel()
+                    linear_mm_s = nav_lin * 1000.0
+                    angular_mdeg_s = nav_ang * 57295.77951308232  # rad/s -> mdeg/s
+                else:
+                    async with STATE.lock:
+                        nav_fresh = now_ms() < STATE.nav_until_ms
+                        linear_mm_s = STATE.nav_linear_mm_s if nav_fresh else 0.0
+                        angular_mdeg_s = STATE.nav_angular_mdeg_s if nav_fresh else 0.0
             else:
                 linear_mm_s = manual_lin
                 angular_mdeg_s = manual_ang
@@ -571,22 +588,35 @@ async def control_loop() -> None:
 
 
 async def presence_loop() -> None:
-    """Mark a device stale if it goes quiet, and log stuck-wheel events."""
+    """Mark a device disconnected if it goes quiet, and log stuck-wheel events."""
     while True:
         try:
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.5)
+            changed = False
             async with STATE.lock:
                 stale = SETTINGS.device_stale_ms
-                for device in (STATE.arduino, STATE.nodemcu):
-                    if not device.connected or device.last_message_ms is None:
+                for dev_name, device in (("arduino", STATE.arduino), ("nodemcu", STATE.nodemcu)):
+                    if not device.connected:
                         continue
-                    if now_ms() - device.last_message_ms > stale:
+                    if device.last_message_ms is None or (now_ms() - device.last_message_ms > stale):
+                        device.connected = False
+                        changed = True
                         STATE.logs.emit(
                             "system",
                             "warn",
-                            f"{device.name} silent for >{stale} ms",
+                            f"{device.name} offline (no telemetry for >{stale} ms)",
                         )
-                        device.last_message_ms = now_ms()  # log once per window
+                        if dev_name == "arduino":
+                            STATE.set_running(False)
+                            link = LINKS.arduino
+                            LINKS.arduino = None
+                            if link is not None:
+                                link.alive = False
+                        elif dev_name == "nodemcu":
+                            link = LINKS.nodemcu
+                            LINKS.nodemcu = None
+                            if link is not None:
+                                link.alive = False
 
                 # Stuck detection: commanded to move, drive applied, no motion.
                 odom = STATE.odom
@@ -603,7 +633,129 @@ async def presence_loop() -> None:
                             "warn",
                             "wheels driven but no motion — possible stall",
                         )
+                status = STATE.status_snapshot()
+            if changed:
+                HUB.broadcast("status", status)
         except asyncio.CancelledError:
             raise
         except Exception:
             logger.exception("presence loop iteration failed")
+
+
+# ---------------------------------------------------------------------------
+# Phone & Phone Relay WebSocket support
+# ---------------------------------------------------------------------------
+ACTIVE_PHONE_WEBSOCKET: WebSocket | None = None
+CONNECTED_PHONE_RELAYS: set[WebSocket] = set()
+
+# Shared buffer to accumulate accelerometer, gyro, and orientation components
+phone_imu_buffer = {
+    "acc_x": 0.0, "acc_y": 0.0, "acc_z": 0.0,
+    "gyro_x": 0.0, "gyro_y": 0.0, "gyro_z": 0.0,
+    "roll": 0.0, "pitch": 0.0, "yaw": 0.0
+}
+
+@router.websocket("/ws/phone")
+async def ws_phone(ws: WebSocket) -> None:
+    global ACTIVE_PHONE_WEBSOCKET
+    await ws.accept()
+    ACTIVE_PHONE_WEBSOCKET = ws
+    logger.info("Android Phone connected to backend WebSocket")
+    
+    # Send initial map state if available
+    try:
+        from map_manager import MAP_MANAGER
+        map_snapshot = MAP_MANAGER.get_snapshot()
+        if map_snapshot:
+            await ws.send_text(json.dumps({"type": "map", **map_snapshot}))
+    except Exception:
+        pass
+    
+    try:
+        while True:
+            raw = await ws.receive_text()
+            try:
+                frame = json.loads(raw)
+            except Exception:
+                continue
+            
+            dataType = frame.get("type")
+            relay_payload = None
+
+            # 1. Action Commands from Phone UI
+            if dataType == "command":
+                action = frame.get("action")
+                if action == "estop":
+                    async with STATE.lock:
+                        STATE.set_running(False)
+                        STATE.logs.emit("phone", "error", "E-STOP triggered from Android App")
+                elif action == "auto_explore":
+                    async with STATE.lock:
+                        STATE.logs.emit("phone", "info", "Autonomous Frontier Exploration commanded from Android")
+                continue
+
+            # 2. Sub-sensor updates (Flat or Nested)
+            if dataType == "accelerometer":
+                phone_imu_buffer["acc_x"] = frame.get("ax", 0.0)
+                phone_imu_buffer["acc_y"] = frame.get("ay", 0.0)
+                phone_imu_buffer["acc_z"] = frame.get("az", 0.0)
+                relay_payload = {"type": "phone_imu", "data": phone_imu_buffer}
+            elif dataType == "gyroscope":
+                phone_imu_buffer["gyro_x"] = frame.get("gx", 0.0)
+                phone_imu_buffer["gyro_y"] = frame.get("gy", 0.0)
+                phone_imu_buffer["gyro_z"] = frame.get("gz", 0.0)
+                relay_payload = {"type": "phone_imu", "data": phone_imu_buffer}
+            elif dataType == "orientation":
+                phone_imu_buffer["yaw"] = frame.get("yaw", 0.0)
+                phone_imu_buffer["pitch"] = frame.get("pitch", 0.0)
+                phone_imu_buffer["roll"] = frame.get("roll", 0.0)
+                relay_payload = {"type": "phone_imu", "data": phone_imu_buffer}
+            elif dataType == "gps":
+                relay_payload = {"type": "phone_gps", "data": frame}
+            elif dataType == "camera":
+                relay_payload = {"type": "phone_camera", "data": frame}
+            
+            if relay_payload is not None:
+                # Forward to all connected ROS2 phone relay nodes
+                msg_str = json.dumps(relay_payload)
+                for relay in list(CONNECTED_PHONE_RELAYS):
+                    try:
+                        await relay.send_text(msg_str)
+                    except Exception:
+                        CONNECTED_PHONE_RELAYS.discard(relay)
+                        
+    except WebSocketDisconnect:
+        pass
+    finally:
+        if ACTIVE_PHONE_WEBSOCKET == ws:
+            ACTIVE_PHONE_WEBSOCKET = None
+        logger.info("Android Phone disconnected from backend WebSocket")
+
+@router.websocket("/ws/phone_relay")
+async def ws_phone_relay(ws: WebSocket) -> None:
+    await ws.accept()
+    CONNECTED_PHONE_RELAYS.add(ws)
+    logger.info("ROS2 Phone Relay client connected to backend")
+    
+    try:
+        while True:
+            raw = await ws.receive_text()
+            try:
+                frame = json.loads(raw)
+            except Exception:
+                continue
+            
+            # If the ROS2 stack issues eyes animation state changes
+            if frame.get("type") == "robot_state":
+                state = frame.get("state", "idle")
+                if ACTIVE_PHONE_WEBSOCKET is not None:
+                    try:
+                        await ACTIVE_PHONE_WEBSOCKET.send_text(json.dumps({"robot_state": state}))
+                    except Exception:
+                        pass
+    except WebSocketDisconnect:
+        pass
+    finally:
+        CONNECTED_PHONE_RELAYS.discard(ws)
+        logger.info("ROS2 Phone Relay client disconnected")
+

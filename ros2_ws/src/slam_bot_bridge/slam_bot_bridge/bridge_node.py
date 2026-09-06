@@ -17,6 +17,13 @@ Running both at once would publish /scan twice. Launch files default to (A);
 pass ``standalone_bridge:=true`` to use this instead.
 
 Topics (§7):  publishes /scan, /odom, /tf, /tf_static   subscribes /cmd_vel
+
+It also owns the autonomy entry point. The browser's "click a point on the map"
+goal arrives here as a ``nav_goal`` frame and is sent to Nav2's NavigateToPose
+action server, because in the Windows-backend + WSL-ROS split this process is
+the only one that has both rclpy and a route to the browser. Nav2's resulting
+/cmd_vel comes back through ``_on_cmd_vel`` and out to the MCU. That round trip
+is what makes the robot drive itself.
 """
 
 from __future__ import annotations
@@ -28,8 +35,11 @@ import time
 from typing import Any
 
 import rclpy
+from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import Quaternion, TransformStamped, Twist
+from nav2_msgs.action import NavigateToPose
 from nav_msgs.msg import Odometry
+from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
 from sensor_msgs.msg import LaserScan
@@ -52,6 +62,16 @@ def scan_to_ranges(
     Keeps the nearest return per bin: for obstacle avoidance, under-reporting
     distance is the safe direction to err. Empty bins are inf, which costmaps
     read as "no information" rather than "clear".
+
+    Handedness (this is load-bearing): the RPLIDAR A1 reports its angle
+    increasing CLOCKWISE viewed from above, while sensor_msgs/LaserScan is read
+    counter-clockwise about +Z (REP-103, and this node publishes a positive
+    angle_increment). Binning the raw angle therefore publishes a mirror image
+    of the room. Straight-line driving still looks fine — a mirrored world is
+    self-consistent — but every rotation is seen by the scan matcher as turning
+    the *opposite* way to odometry, so the pose graph is fed a contradiction on
+    every turn and the map smears and double-walls. Negating here, once, at the
+    single point where sensor degrees become beam indices, is the whole fix.
     """
     ranges = [float("inf")] * bins
     bin_width = 360.0 / bins
@@ -59,7 +79,7 @@ def scan_to_ranges(
         dist_m = dist_mm / 1000.0
         if dist_m < range_min_m or dist_m > range_max_m:
             continue
-        index = int((angle % 360.0) / bin_width)
+        index = int(((360.0 - angle) % 360.0) / bin_width)
         if index >= bins:
             index = bins - 1
         if dist_m < ranges[index]:
@@ -101,9 +121,22 @@ class BridgeNode(Node):
 
         self.create_subscription(Twist, "cmd_vel", self._on_cmd_vel, 10)
 
+        # Autonomy: Nav2's goal endpoint. Created lazily on first use so the
+        # bridge still starts when Nav2 is not running (mapping-only sessions).
+        self._nav_client: ActionClient | None = None
+        self._goal_handle: Any = None
+
+        # millis() on each MCU is boot-relative and unsynchronised with the ROS
+        # clock, so we learn a per-device offset instead of stamping on arrival.
+        self._clock_offset_ns: dict[str, int] = {}
+
         self._ws: Any = None
         self._ws_lock = threading.Lock()
         self._stop = threading.Event()
+        self._current_x = 0.0
+        self._current_y = 0.0
+        self._current_theta = 0.0
+        self._tf_timer = self.create_timer(0.05, self._broadcast_odom_tf)
 
         self._publish_static_tf()
 
@@ -115,6 +148,20 @@ class BridgeNode(Node):
             f"standalone bridge started, connecting to "
             f"{self.get_parameter('backend_url').value}"
         )
+
+    def _broadcast_odom_tf(self) -> None:
+        if not bool(self.get_parameter("publish_odom_tf").value):
+            return
+        odom_frame = str(self.get_parameter("odom_frame").value)
+        base_frame = str(self.get_parameter("base_frame").value)
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = odom_frame
+        t.child_frame_id = base_frame
+        t.transform.translation.x = self._current_x
+        t.transform.translation.y = self._current_y
+        t.transform.rotation = yaw_to_quaternion(self._current_theta)
+        self.tf_broadcaster.sendTransform(t)
 
     # -- static TF (§7) ----------------------------------------------------
     def _publish_static_tf(self) -> None:
@@ -153,6 +200,141 @@ class BridgeNode(Node):
                 ws.send(json.dumps(payload))
             except Exception as exc:
                 self.get_logger().debug(f"send failed: {exc}")
+
+    def _log_to_backend(self, level: str, message: str) -> None:
+        """Surface a message on the web app's Logs page under the 'nav' source."""
+        self._send(
+            {"type": "log", "source": "nav", "level": level, "msg": message}
+        )
+
+    # -- timestamps --------------------------------------------------------
+    def _stamp_from_mcu(self, source: str, t_ms: Any):
+        """Map an MCU ``millis()`` reading onto the ROS clock.
+
+        Stamping on arrival makes every message look like it was captured the
+        instant it finished crossing WiFi, so scans and odometry — which travel
+        different paths at different rates — get timestamps whose ordering has
+        nothing to do with when the events actually happened. slam_toolbox then
+        matches a scan against the wrong pose, which smears walls.
+
+        millis() is boot-relative, so the offset to the ROS clock is unknown but
+        constant. The least-delayed frame seen is the best estimate of it, so we
+        track the running minimum of (now - t_ms). A backwards jump means the
+        MCU rebooted or millis() wrapped, so re-latch rather than staying pinned
+        to a stale offset.
+        """
+        now_ns = self.get_clock().now().nanoseconds
+        try:
+            device_ns = int(float(t_ms) * 1_000_000)
+        except (TypeError, ValueError):
+            return self.get_clock().now().to_msg()
+
+        candidate = now_ns - device_ns
+        previous = self._clock_offset_ns.get(source)
+        if previous is None or abs(candidate - previous) > 5_000_000_000:
+            # First frame, or the device clock restarted.
+            self._clock_offset_ns[source] = candidate
+        elif candidate < previous:
+            self._clock_offset_ns[source] = candidate
+        else:
+            # Bleed upward very slowly so millis() drift cannot pin us to an
+            # offset learned from one unusually fast frame hours ago.
+            self._clock_offset_ns[source] = previous + 1_000_000
+
+        stamp_ns = device_ns + self._clock_offset_ns[source]
+        # Never hand out a future stamp: tf2 refuses to extrapolate forward.
+        if stamp_ns > now_ns:
+            stamp_ns = now_ns
+        from builtin_interfaces.msg import Time as TimeMsg
+
+        return TimeMsg(sec=int(stamp_ns // 1_000_000_000),
+                       nanosec=int(stamp_ns % 1_000_000_000))
+
+    # -- autonomy: goals from the browser ----------------------------------
+    def _handle_nav_goal(self, data: dict[str, Any]) -> None:
+        """Send a clicked map point to Nav2 as a NavigateToPose goal."""
+        try:
+            x_m = float(data.get("x_m"))
+            y_m = float(data.get("y_m"))
+            theta = float(data.get("theta_rad", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            self._log_to_backend("error", "nav_goal ignored: non-numeric x/y")
+            return
+
+        if self._nav_client is None:
+            self._nav_client = ActionClient(self, NavigateToPose, "navigate_to_pose")
+
+        if not self._nav_client.wait_for_server(timeout_sec=2.0):
+            self._log_to_backend(
+                "error",
+                "Nav2 navigate_to_pose action server not available — is the "
+                "Nav2 stack running and activated?",
+            )
+            return
+
+        goal = NavigateToPose.Goal()
+        goal.pose.header.frame_id = "map"
+        # Leave the stamp at zero: "the latest available transform", which is
+        # what you want for a goal, rather than a pose pinned to an instant that
+        # may already have fallen out of the TF buffer.
+        goal.pose.header.stamp.sec = 0
+        goal.pose.header.stamp.nanosec = 0
+        goal.pose.pose.position.x = x_m
+        goal.pose.pose.position.y = y_m
+        goal.pose.pose.orientation = yaw_to_quaternion(theta)
+
+        self.get_logger().info(f"sending Nav2 goal ({x_m:.2f}, {y_m:.2f})")
+        self._log_to_backend("info", f"goal sent to Nav2: ({x_m:.2f}, {y_m:.2f}) m")
+        future = self._nav_client.send_goal_async(
+            goal, feedback_callback=self._on_nav_feedback
+        )
+        future.add_done_callback(self._on_goal_response)
+
+    def _on_goal_response(self, future: Any) -> None:
+        try:
+            handle = future.result()
+        except Exception as exc:
+            self._log_to_backend("error", f"Nav2 rejected the goal request: {exc}")
+            return
+        if not handle.accepted:
+            self._log_to_backend("warn", "Nav2 rejected the goal (unreachable?)")
+            return
+        self._goal_handle = handle
+        self._log_to_backend("info", "Nav2 accepted the goal — navigating")
+        handle.get_result_async().add_done_callback(self._on_goal_result)
+
+    def _on_nav_feedback(self, feedback: Any) -> None:
+        try:
+            remaining = float(feedback.feedback.distance_remaining)
+        except Exception:
+            return
+        self._send({"type": "nav_feedback", "distance_remaining_m": round(remaining, 3)})
+
+    def _on_goal_result(self, future: Any) -> None:
+        try:
+            status = future.result().status
+        except Exception as exc:
+            self._log_to_backend("error", f"Nav2 goal result unavailable: {exc}")
+            return
+        if status == GoalStatus.STATUS_SUCCEEDED:
+            self._log_to_backend("info", "Nav2 goal reached")
+        elif status == GoalStatus.STATUS_CANCELED:
+            self._log_to_backend("warn", "Nav2 goal cancelled")
+        else:
+            self._log_to_backend("error", f"Nav2 goal failed (status {status})")
+        self._goal_handle = None
+        self._send({"type": "nav_done", "status": int(status)})
+
+    def _cancel_goal(self) -> None:
+        handle = self._goal_handle
+        self._goal_handle = None
+        if handle is None:
+            return
+        try:
+            handle.cancel_goal_async()
+            self._log_to_backend("info", "Nav2 goal cancelled by operator")
+        except Exception as exc:
+            self.get_logger().debug(f"cancel failed: {exc}")
 
     # -- backend WebSocket client -----------------------------------------
     def _websocket_loop(self) -> None:
@@ -193,17 +375,33 @@ class BridgeNode(Node):
         if not isinstance(frame, dict):
             return
 
+        # Commands the backend addresses to us directly carry a "type"; topic
+        # broadcasts carry a "topic". Handle commands first.
+        kind = frame.get("type")
+        if kind == "nav_goal":
+            self._handle_nav_goal(frame.get("data") or frame)
+            return
+        if kind in ("nav_cancel", "estop"):
+            self._cancel_goal()
+            return
+
         topic = frame.get("topic")
         data = frame.get("data")
         if not isinstance(data, dict):
             return
 
-        if topic == "scan":
+        if topic == "nav_goal":
+            self._handle_nav_goal(data)
+        elif topic == "nav_cancel":
+            self._cancel_goal()
+        elif topic == "scan":
             self._publish_scan(data)
+        elif topic == "odom":
+            # Dedicated high-rate odometry feed (see the backend's odom_loop).
+            self._publish_odom(data)
         elif topic == "status":
-            odom = data.get("odom")
-            if isinstance(odom, dict):
-                self._publish_odom(odom)
+            if "odom" in data and isinstance(data["odom"], dict):
+                self._publish_odom(data["odom"])
 
     def _publish_scan(self, data: dict[str, Any]) -> None:
         bins = int(self.get_parameter("scan_bins").value)
@@ -243,6 +441,9 @@ class BridgeNode(Node):
         x_m = float(data.get("x_mm", 0.0)) / 1000.0
         y_m = float(data.get("y_mm", 0.0)) / 1000.0
         theta = float(data.get("theta_rad", 0.0))
+        self._current_x = x_m
+        self._current_y = y_m
+        self._current_theta = theta
         linear = float(data.get("linear_mm_s", 0.0)) / 1000.0
         angular = math.radians(float(data.get("angular_mdeg_s", 0.0)) / 1000.0)
         quat = yaw_to_quaternion(theta)

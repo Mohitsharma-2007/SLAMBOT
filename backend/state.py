@@ -52,11 +52,16 @@ class DeviceState:
 
     def snapshot(self) -> dict[str, Any]:
         stale_ms: int | None = None
+        is_conn = self.connected
         if self.last_message_ms is not None:
             stale_ms = now_ms() - self.last_message_ms
+            if stale_ms > 3000:
+                is_conn = False
+        else:
+            is_conn = False
         return {
             "name": self.name,
-            "connected": self.connected,
+            "connected": is_conn,
             "ip": self.ip,
             "firmware": self.firmware,
             "connected_at_ms": self.connected_at_ms,
@@ -310,6 +315,12 @@ class AppState:
         self.manual_linear_mm_s = 0.0
         self.manual_angular_mdeg_s = 0.0
         self.manual_until_ms = 0
+        
+        # Nav2 command from standalone bridge, in the firmware's units.
+        self.nav_linear_mm_s = 0.0
+        self.nav_angular_mdeg_s = 0.0
+        self.nav_until_ms = 0
+        
         self.control_mode: Literal["manual", "nav2"] = "manual"
 
         # Session stats feeding the AI advisor's summary (§9.1).

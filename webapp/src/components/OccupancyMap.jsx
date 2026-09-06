@@ -19,65 +19,100 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useBot } from '../lib/store.jsx'
 
-function decodeToImageData(map) {
+function decodeToImageData(map, enhanceOutlines) {
   const { width, height, rle } = map
   const image = new ImageData(width, height)
   const pixels = image.data
 
-  let index = 0
+  // Decode RLE into flat array for cheap edge neighbor checks
+  const cells = new Int8Array(width * height)
+  let cellIdx = 0
   for (let i = 0; i < rle.length - 1; i += 2) {
-    const value = rle[i]
+    const val = rle[i]
     const count = rle[i + 1]
-
-    let r
-    let g
-    let b
-    if (value < 0) {
-      // Unknown — mid grey, clearly distinct from both free and occupied.
-      r = 32
-      g = 38
-      b = 46
-    } else if (value < 25) {
-      // Free space.
-      r = 222
-      g = 228
-      b = 234
-    } else if (value < 65) {
-      // Uncertain: interpolate so partial evidence looks partial.
-      const t = (value - 25) / 40
-      r = Math.round(222 - t * 130)
-      g = Math.round(228 - t * 140)
-      b = Math.round(234 - t * 140)
-    } else {
-      // Occupied.
-      r = 20
-      g = 22
-      b = 28
+    for (let n = 0; n < count && cellIdx < cells.length; n += 1) {
+      cells[cellIdx] = val
+      cellIdx += 1
     }
+  }
 
-    for (let n = 0; n < count && index < width * height; n += 1) {
-      const offset = index * 4
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const idx = y * width + x
+      const value = cells[idx]
+
+      let r = 32
+      let g = 38
+      let b = 46 // Unknown
+      
+      if (value >= 0 && value < 25) {
+        // Free space - sleek deep space blue
+        r = 15
+        g = 20
+        b = 28
+      } else if (value >= 25 && value < 65) {
+        // Uncertain
+        const t = (value - 25) / 40
+        r = Math.round(15 + t * 40)
+        g = Math.round(20 + t * 40)
+        b = Math.round(28 + t * 40)
+      } else if (value >= 65) {
+        // Occupied (wall)
+        if (enhanceOutlines) {
+          // Outline edge check
+          let isEdge = false
+          if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+            isEdge = true
+          } else {
+            const up = cells[(y - 1) * width + x]
+            const down = cells[(y + 1) * width + x]
+            const left = cells[y * width + (x - 1)]
+            const right = cells[y * width + (x + 1)]
+            if (up < 65 || down < 65 || left < 65 || right < 65) {
+              isEdge = true
+            }
+          }
+
+          if (isEdge) {
+            // Bright neon cyan borders
+            r = 88
+            g = 166
+            b = 255
+          } else {
+            // Inner wall blocks
+            r = 30
+            g = 40
+            b = 55
+          }
+        } else {
+          r = 20
+          g = 22
+          b = 28
+        }
+      }
+
+      const offset = idx * 4
       pixels[offset] = r
       pixels[offset + 1] = g
       pixels[offset + 2] = b
       pixels[offset + 3] = 255
-      index += 1
     }
   }
   return image
 }
 
 export default function OccupancyMap({ height = 520 }) {
-  const { mapRef, trailRef, planRef, status, mapVersion, sendGoal, controlMode } =
+  const { mapRef, trailRef, planRef, status, mapVersion, sendGoal, controlMode, clearMap } =
     useBot()
 
   const canvasRef = useRef(null)
   const wrapRef = useRef(null)
-  const cacheRef = useRef({ stamp: -1, canvas: null, width: 0, height: 0 })
+  const cacheRef = useRef({ key: '', canvas: null, width: 0, height: 0 })
 
   const [view, setView] = useState({ zoom: 1, panX: 0, panY: 0 })
   const [autoFit, setAutoFit] = useState(true)
   const [showTrail, setShowTrail] = useState(true)
+  const [enhanceOutlines, setEnhanceOutlines] = useState(true)
   const [goalHint, setGoalHint] = useState(null)
   const dragRef = useRef(null)
 
@@ -86,21 +121,22 @@ export default function OccupancyMap({ height = 520 }) {
     const map = mapRef.current
     if (!map || !map.width || !map.height) return null
     const cache = cacheRef.current
-    if (cache.stamp === map.stamp_ms && cache.canvas) return cache
+    const cacheKey = `${map.stamp_ms}_${enhanceOutlines}`
+    if (cache.key === cacheKey && cache.canvas) return cache
 
     const offscreen = document.createElement('canvas')
     offscreen.width = map.width
     offscreen.height = map.height
-    offscreen.getContext('2d').putImageData(decodeToImageData(map), 0, 0)
+    offscreen.getContext('2d').putImageData(decodeToImageData(map, enhanceOutlines), 0, 0)
 
     cacheRef.current = {
-      stamp: map.stamp_ms,
+      key: cacheKey,
       canvas: offscreen,
       width: map.width,
       height: map.height,
     }
     return cacheRef.current
-  }, [mapRef])
+  }, [mapRef, enhanceOutlines])
 
   // World (metres) <-> screen (px) transform, recomputed per frame.
   const transformRef = useRef(null)
@@ -352,14 +388,22 @@ export default function OccupancyMap({ height = 520 }) {
 
   return (
     <div>
-      <div className="row" style={{ marginBottom: 10 }}>
-        <label className="small dim">
+      <div className="row" style={{ marginBottom: 10, gap: 14 }}>
+        <label className="small dim" style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
           <input
             type="checkbox"
             checked={showTrail}
             onChange={(e) => setShowTrail(e.target.checked)}
           />{' '}
           Pose trail
+        </label>
+        <label className="small dim" style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={enhanceOutlines}
+            onChange={(e) => setEnhanceOutlines(e.target.checked)}
+          />{' '}
+          Enhance outlines
         </label>
         <button
           className="sm"
@@ -369,6 +413,16 @@ export default function OccupancyMap({ height = 520 }) {
           }}
         >
           Fit to view
+        </button>
+        <button
+          className="sm danger"
+          onClick={() => {
+            if (window.confirm("Are you sure you want to clear the occupancy map and robot pose trail?")) {
+              clearMap();
+            }
+          }}
+        >
+          Clear Map
         </button>
         <div className="spacer" />
         <span className="small faint mono">

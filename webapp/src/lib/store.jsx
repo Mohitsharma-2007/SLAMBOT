@@ -190,6 +190,7 @@ export function BotProvider({ children }) {
   )
 
   const clearTrail = useCallback(() => send({ type: 'clear_trail' }), [send])
+  const clearMap = useCallback(() => send({ type: 'clear_map' }), [send])
   const resetSession = useCallback(() => send({ type: 'reset_session' }), [send])
 
   const value = useMemo(
@@ -221,6 +222,7 @@ export function BotProvider({ children }) {
       resetTuning,
       sendGoal,
       clearTrail,
+      clearMap,
       resetSession,
       send,
     }),
@@ -243,6 +245,7 @@ export function BotProvider({ children }) {
       resetTuning,
       sendGoal,
       clearTrail,
+      clearMap,
       resetSession,
       send,
     ],

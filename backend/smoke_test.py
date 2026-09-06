@@ -169,23 +169,32 @@ def test_scan_binning() -> None:
     ranges = scan_to_ranges([0.0, 90.0, 180.0, 270.0],
                             [1000.0, 2000.0, 3000.0, 4000.0], bins=360)
     check("360 bins produced", len(ranges) == 360, str(len(ranges)))
-    check("0 deg -> 1.0 m", abs(ranges[0] - 1.0) < 1e-6, str(ranges[0]))
-    check("90 deg -> 2.0 m", abs(ranges[90] - 2.0) < 1e-6, str(ranges[90]))
+    # The lidar counts clockwise but LaserScan is read counter-clockwise, so a
+    # sample at sensor angle a lands in beam (360 - a). Asserting the identity
+    # mapping here is exactly what kept the mirrored-map bug alive.
+    check("sensor 0 deg -> beam 0 -> 1.0 m", abs(ranges[0] - 1.0) < 1e-6,
+          str(ranges[0]))
+    check("sensor 90 deg -> beam 270 -> 2.0 m", abs(ranges[270] - 2.0) < 1e-6,
+          str(ranges[270]))
+    check("sensor 180 deg -> beam 180 -> 3.0 m", abs(ranges[180] - 3.0) < 1e-6,
+          str(ranges[180]))
+    check("sensor 270 deg -> beam 90 -> 4.0 m", abs(ranges[90] - 4.0) < 1e-6,
+          str(ranges[90]))
     check("empty bin is inf", ranges[45] == float("inf"), str(ranges[45]))
 
     # Nearest-wins is the safety-critical property.
     ranges = scan_to_ranges([10.1, 10.4], [3000.0, 500.0], bins=360)
-    check("nearest return wins within a bin", abs(ranges[10] - 0.5) < 1e-6,
-          str(ranges[10]))
+    check("nearest return wins within a bin", abs(ranges[349] - 0.5) < 1e-6,
+          str(ranges[349]))
 
     ranges = scan_to_ranges([0.0, 1.0], [50.0, 9000.0], bins=360,
                             range_min_m=0.15, range_max_m=6.0)
     check("out-of-range samples discarded",
-          ranges[0] == float("inf") and ranges[1] == float("inf"))
+          ranges[0] == float("inf") and ranges[359] == float("inf"))
 
     ranges = scan_to_ranges([359.99], [1000.0], bins=360)
     check("angle at 360 boundary does not overflow the array",
-          ranges[359] == 1.0, str(ranges[359]))
+          ranges[0] == 1.0, str(ranges[0]))
 
 
 def test_map_summary() -> None:

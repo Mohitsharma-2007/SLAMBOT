@@ -7,6 +7,7 @@
  * have to navigate anywhere to halt the robot.
  */
 
+import { useState, useEffect } from 'react'
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import { useBot } from './lib/store.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -31,12 +32,36 @@ const PAGES = [
 
 export default function App() {
   const { connected, running, estopLatched, estop, arduino, nodemcu } = useBot()
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement))
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {})
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {})
+      }
+    }
+  }
 
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
-          SLAM<span>Bot</span>
+        <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img
+            src="/SLAMBOT.png"
+            alt="SLAM Bot"
+            style={{ width: '28px', height: '28px', borderRadius: '6px', filter: 'drop-shadow(0 0 6px rgba(0, 229, 255, 0.5))' }}
+          />
+          <div>SLAM<span>Bot</span></div>
         </div>
 
         <nav className="nav">
@@ -86,6 +111,21 @@ export default function App() {
           >
             {running ? 'RUNNING' : estopLatched ? 'E-STOPPED' : 'STOPPED'}
           </span>
+
+          <button
+            onClick={toggleFullscreen}
+            style={{
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: '600',
+              background: 'rgba(0, 229, 255, 0.12)',
+              borderColor: 'var(--accent)',
+              color: 'var(--accent)'
+            }}
+            title="Toggle Fullscreen Mode (F11)"
+          >
+            {isFullscreen ? 'Exit Full' : '⛶ Fullscreen'}
+          </button>
 
           <button
             className="estop"

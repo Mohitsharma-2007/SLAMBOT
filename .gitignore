@@ -1,28 +1,51 @@
-# Secrets — WiFi credentials live in these, they must never be committed.
-# The templates are tracked; your filled-in copies are not.
+# Secrets — WiFi credentials and environment secrets must never be committed.
 firmware/*/secrets.h
 !firmware/*/secrets.h.example
 .env
+.env.*
+!.env.example
 
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 .venv/
 venv/
 *.egg-info/
+*.egg
+.pytest_cache/
 
-# Node
+# Node / Web App
 node_modules/
 webapp/dist/
+webapp/node_modules/
+electron/node_modules/
+electron/dist/
 
-# Build artifacts
+# Build artifacts & Temporary logs
 build/
+install/
+log/
 sessions/
+*.jsonl
+*.log
+scratch/
+scratch_*.ps1
+motor_audit_prompt.md
 
 # ROS2
 ros2_ws/build/
 ros2_ws/install/
 ros2_ws/log/
+
+# Android / Mobile Builds
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/gradle-bin/
+*.apk
+*.aab
 
 # Editors / OS
 .vscode/
@@ -30,3 +53,4 @@ ros2_ws/log/
 *.swp
 .DS_Store
 Thumbs.db
+.claude/

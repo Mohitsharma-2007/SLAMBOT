@@ -82,6 +82,11 @@ def scan_to_ranges(
     obstacle avoidance, under-reporting distance is safe and over-reporting is
     not. Empty buckets become inf, which slam_toolbox and the costmaps read as
     "no return" rather than "clear".
+
+    The angle is negated because the RPLIDAR A1 counts clockwise while
+    LaserScan is read counter-clockwise — see the twin of this function in
+    ros2_ws/src/slam_bot_bridge/slam_bot_bridge/bridge_node.py for the full
+    reasoning. The two copies must stay in sync.
     """
     ranges = [float("inf")] * bins
     bin_width = 360.0 / bins
@@ -89,7 +94,7 @@ def scan_to_ranges(
         dist_m = dist_mm / 1000.0
         if dist_m < range_min_m or dist_m > range_max_m:
             continue
-        index = int((angle % 360.0) / bin_width)
+        index = int(((360.0 - angle) % 360.0) / bin_width)
         if index >= bins:
             index = bins - 1
         if dist_m < ranges[index]:
@@ -104,6 +109,8 @@ class _BridgeNode(Node):  # type: ignore[misc]
         super().__init__("slam_bot_bridge")
         self._bridge = bridge
 
+        if not self.has_parameter("use_sim_time"):
+            self.declare_parameter("use_sim_time", False)
         self.declare_parameter("scan_bins", 360)
         self.declare_parameter("scan_range_min", 0.15)
         self.declare_parameter("scan_range_max", 6.0)
@@ -412,7 +419,8 @@ class RosBridge:
 
             goal = NavigateToPose.Goal()
             goal.pose.header.frame_id = "map"
-            goal.pose.header.stamp = self._node.get_clock().now().to_msg()
+            from builtin_interfaces.msg import Time
+            goal.pose.header.stamp = Time(sec=0, nanosec=0)
             goal.pose.pose.position.x = x_m
             goal.pose.pose.position.y = y_m
             qx, qy, qz, qw = _yaw_to_quaternion(theta_rad)
@@ -463,6 +471,21 @@ class RosBridge:
             logger.debug("cancel failed", exc_info=True)
         finally:
             self._goal_handle = None
+
+    def clear_map(self) -> bool:
+        if not self.available or self._node is None:
+            return False
+        try:
+            from std_srvs.srv import Empty
+            # slam_toolbox uses clear_changes to reset/clear mapping
+            client = self._node.create_client(Empty, "/slam_toolbox/clear_changes")
+            if not client.wait_for_service(timeout_sec=0.5):
+                return False
+            client.call_async(Empty.Request())
+            return True
+        except Exception:
+            logger.debug("clear_map failed", exc_info=True)
+            return False
 
     # -- ROS -> asyncio ----------------------------------------------------
     def _store_cmd_vel(self, linear_m_s: float, angular_rad_s: float) -> None:

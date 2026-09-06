@@ -257,16 +257,12 @@ void lidarSendCommand(uint8_t cmd) {
 
 void lidarStop() {
   lidarSendCommand(RP_CMD_STOP);
-  delay(20);
+  delay(50);
   while (Serial.available()) Serial.read();
 }
 
 bool lidarStartScan() {
   lidarStop();
-  lidarSendCommand(RP_CMD_RESET);
-  delay(800);                                  // A1 needs ~800 ms after reset
-  while (Serial.available()) Serial.read();
-
   lidarSendCommand(RP_CMD_SCAN);
 
   // Consume the 7-byte response descriptor: A5 5A 05 00 00 40 81
@@ -288,6 +284,7 @@ uint8_t  quals[MAX_SAMPLES];
 uint16_t droppedThisRev = 0;
 uint32_t revStartMs     = 0;
 uint32_t revCounter     = 0;
+uint32_t rawBytesRead   = 0;
 
 // Per-revolution diagnostics.
 //
@@ -322,48 +319,46 @@ void publishRevolution() {
   uint32_t dtMs = (revStartMs == 0) ? 0 : (now - revStartMs);
   revStartMs = now;
 
-  // Compact numeric arrays keep the frame small; the ESP8266 has ~40 KB of
-  // usable heap and one frame per revolution at 5.5 Hz must not fragment it.
-  JsonDocument doc;
-  doc["type"]     = "scan";
-  doc["seq"]      = revCounter++;
-  doc["t_ms"]     = now;
-  doc["rev_ms"]   = dtMs;
-  doc["n"]        = sampleCount;
-  doc["dropped"]  = droppedThisRev;
-  doc["min_range_mm"] = config.lidar_min_range_mm;
-  doc["max_range_mm"] = config.lidar_max_range_mm;
-  if (minDistThisRev != 0xFFFF) doc["min_distance_mm"] = minDistThisRev;
-
-  // Only attached when the revolution yielded nothing. A healthy scan does not
-  // need to carry its own post-mortem, and at ~5.5 Hz the extra bytes would be
-  // pure overhead; when n == 0 this is the only evidence of why.
-  if (sampleCount == 0) {
-    JsonObject d = doc["diag"].to<JsonObject>();
-    d["packets"]     = diag.packets;
-    d["bad_frame"]   = diag.badFrame;
-    d["rej_quality"] = diag.rejQuality;
-    d["rej_zero"]    = diag.rejZero;
-    d["rej_near"]    = diag.rejNear;
-    d["rej_far"]     = diag.rejFar;
-    d["rej_angle"]   = diag.rejAngle;
-    d["max_quality"] = diag.maxQuality;
-    d["min_quality_cfg"] = config.min_quality;
-  }
-
-  JsonArray aArr = doc["angles_deg"].to<JsonArray>();
-  JsonArray dArr = doc["dists_mm"].to<JsonArray>();
-  JsonArray qArr = doc["quality"].to<JsonArray>();
-  for (uint16_t i = 0; i < sampleCount; i++) {
-    aArr.add(angles[i]);
-    dArr.add(dists[i]);
-    qArr.add(quals[i]);
-  }
-
   String out;
-  out.reserve(sampleCount * 16 + 200);
-  serializeJson(doc, out);
+  out.reserve(sampleCount * 18 + 180);
+  out += "{\"type\":\"scan\",\"seq\":";
+  out += String(revCounter++);
+  out += ",\"t_ms\":";
+  out += String(now);
+  out += ",\"rev_ms\":";
+  out += String(dtMs);
+  out += ",\"n\":";
+  out += String(sampleCount);
+  out += ",\"dropped\":";
+  out += String(droppedThisRev);
+  out += ",\"min_range_mm\":";
+  out += String(config.lidar_min_range_mm);
+  out += ",\"max_range_mm\":";
+  out += String(config.lidar_max_range_mm);
+  if (minDistThisRev != 0xFFFF) {
+    out += ",\"min_distance_mm\":";
+    out += String(minDistThisRev);
+  }
+
+  out += ",\"angles_deg\":[";
+  for (uint16_t i = 0; i < sampleCount; i++) {
+    if (i > 0) out += ",";
+    out += String(angles[i], 1);
+  }
+  out += "],\"dists_mm\":[";
+  for (uint16_t i = 0; i < sampleCount; i++) {
+    if (i > 0) out += ",";
+    out += String(dists[i]);
+  }
+  out += "],\"quality\":[";
+  for (uint16_t i = 0; i < sampleCount; i++) {
+    if (i > 0) out += ",";
+    out += String(quals[i]);
+  }
+  out += "]}";
+
   ws.sendTXT(out);
+  ESP.wdtFeed();
 
   sampleCount    = 0;
   droppedThisRev = 0;
@@ -418,6 +413,7 @@ void pumpLidar() {
   int budget = 256;
   while (Serial.available() && budget-- > 0) {
     uint8_t b = Serial.read();
+    rawBytesRead++;
 
     if (!synced) {
       // Resync on a start-of-revolution byte: S=1, !S=0 -> low two bits 0b01.
@@ -447,7 +443,9 @@ uint32_t lastSampleSeenMs   = 0;
 
 void setup() {
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
+
   uint32_t deadline = millis() + 20000;
   while (WiFi.status() != WL_CONNECTED && millis() < deadline) {
     delay(100);
@@ -464,6 +462,7 @@ void setup() {
   ws.begin(BACKEND_HOST, BACKEND_PORT, BACKEND_PATH);
   ws.onEvent(onWsEvent);
   ws.setReconnectInterval(2000);
+  ws.enableHeartbeat(15000, 3000, 2);
 
   lidarStartScan();
   lastLidarRestartMs = millis();
@@ -474,21 +473,17 @@ void setup() {
 void loop() {
   ws.loop();
 
-  if (WiFi.status() != WL_CONNECTED) {
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
-    delay(200);
-    return;
+  uint32_t rawBefore = rawBytesRead;
+  pumpLidar();
+  if (rawBytesRead != rawBefore) {
+    lastSampleSeenMs = millis();
   }
 
-  uint16_t before = sampleCount;
-  pumpLidar();
-  if (sampleCount != before) lastSampleSeenMs = millis();
-
-  // If the LIDAR stops producing samples for 3 s, re-issue SCAN. A1 units
-  // occasionally need this after a brown-out on the shared 5 V rail.
-  if (millis() - lastSampleSeenMs > 3000 &&
-      millis() - lastLidarRestartMs > 5000) {
-    logToBackend("warn", "no lidar samples for 3 s — restarting scan");
+  // If the LIDAR stops producing bytes for 5 s, re-issue SCAN.
+  if (millis() - lastSampleSeenMs > 5000 &&
+      millis() - lastLidarRestartMs > 6000) {
+    logToBackend("warn", "no lidar bytes for 5 s — re-issuing scan command");
+    rawBytesRead = 0;
     synced = false;
     pktIdx = 0;
     lidarStartScan();

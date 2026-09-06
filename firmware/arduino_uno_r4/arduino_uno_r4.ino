@@ -55,7 +55,55 @@
 #include <ArduinoHttpClient.h>
 #include <ArduinoJson.h>
 #include <EEPROM.h>
+#include <Arduino_LED_Matrix.h>
 #include "secrets.h"
+
+// 12x8 LED Matrix Status Frames
+const uint8_t img_wifi_conn[96] = {
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+  0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+  0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0,
+  0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0,
+  0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+const uint8_t img_ws_conn[96] = {
+  1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0,
+  1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0,
+  1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+  0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+const uint8_t img_connected[96] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+  0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+  0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+const uint8_t img_disconnected[96] = {
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0,
+  0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0,
+  0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0,
+  0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0,
+  0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0,
+  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+};
+
+ArduinoLEDMatrix matrix;
 
 // ---------------------------------------------------------------------------
 // Pin assignments  (§11.5: these are the things that DO require a reflash)
@@ -107,7 +155,7 @@ static const uint32_t CONFIG_MAGIC   = 0x53424D31UL;  // "SBM1"
 // v1 struct has a different layout, so loadConfigFromEeprom() will reject it
 // and fall back to these defaults rather than reading garbage into the new
 // fields. Re-save from the Tuning page after a firmware update.
-static const uint16_t CONFIG_VERSION = 2;
+static const uint16_t CONFIG_VERSION = 6; // Bumped to 6 to invalidate stale EEPROM settings
 static const int      EEPROM_ADDR    = 0;
 
 // Per-wheel state for checkWheelSignSanity(). Declared up here because the
@@ -155,7 +203,7 @@ struct RuntimeConfig {
   //           looks exactly like a dead control. A brief shove fixes it. Turns
   //           in place need the most, because both tyres scrub sideways.
   bool  invert_left           = false;
-  bool  invert_right          = true;   // bench-confirmed on this chassis
+  bool  invert_right          = true;  // default true to compensate for mirrored mounting on right side
   float trim_left             = 1.00f;  // 0.5..1.0 multiplier, only ever down
   float trim_right            = 1.00f;
   float turn_boost            = 1.60f;  // extra command for turn-in-place
@@ -221,7 +269,7 @@ void isrRight() {
   // positive-when-forward or odometry integrates backwards.
   bool a = digitalRead(PIN_ENC_R_A);
   bool b = digitalRead(PIN_ENC_R_B);
-  encRightTicks += (a == b) ? 1 : -1;
+  encRightTicks += (a == b) ? -1 : 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -264,8 +312,11 @@ void motorsCoast() {
 // — a stopped wheel must never be kicked.
 int applyWheelCal(float pidOut, bool invert, float floorDuty) {
   float d = pidOut;
-  if (floorDuty > 0.0f && d != 0.0f && fabsf(d) < floorDuty) {
-    d = (d > 0.0f) ? floorDuty : -floorDuty;
+  if (d != 0.0f) {
+    float minDuty = max(70.0f, floorDuty);
+    if (fabsf(d) < minDuty) {
+      d = (d > 0.0f) ? minDuty : -minDuty;
+    }
   }
   if (invert) d = -d;
   return (int)d;
@@ -388,40 +439,62 @@ bool wsConnected = false;
 // So we write the frame to the TCP socket directly. A client-to-server frame
 // must be masked (RFC 6455 §5.3); the mask key is obfuscation, not security,
 // and does not need to be cryptographically random.
+// Helper to handle transient write buffer saturation without dropping WebSocket
+static bool writeWithTimeout(const uint8_t* data, size_t len, uint32_t timeoutMs = 100) {
+  size_t written = 0;
+  uint32_t t0 = millis();
+  while (written < len && (millis() - t0 < timeoutMs)) {
+    size_t n = wifiClient.write(data + written, len - written);
+    if (n > 0) {
+      written += n;
+    } else {
+      delay(1);
+    }
+  }
+  return (written == len);
+}
+
 void wsSendText(const String& payload) {
   if (!wsConnected) return;
 
   size_t len = payload.length();
-  uint8_t header[8];
-  size_t  h = 0;
-  header[h++] = 0x81;                    // FIN + opcode 0x1 (text)
-
-  if (len < 126) {
-    header[h++] = 0x80 | (uint8_t)len;   // MASK bit + 7-bit length
-  } else if (len < 65536) {
-    header[h++] = 0x80 | 126;            // MASK bit + 16-bit extended length
-    header[h++] = (len >> 8) & 0xFF;
-    header[h++] = len & 0xFF;
-  } else {
-    return;                              // never happens; a frame this big is a bug
+  // Allocate a single contiguous buffer on the stack.
+  // Odometry frames are ~200 bytes, hello config frames are ~350 bytes.
+  // A limit of 512 bytes is safe for the Arduino stack and avoids fragmentation.
+  uint8_t frameBuf[512];
+  
+  if (len + 8 + 4 > sizeof(frameBuf)) {
+    // Payload too large to buffer, ignore (our frames are always smaller)
+    return;
   }
 
+  size_t idx = 0;
+  frameBuf[idx++] = 0x81;                    // FIN + opcode 0x1 (text)
+
+  if (len < 126) {
+    frameBuf[idx++] = 0x80 | (uint8_t)len;   // MASK bit + 7-bit length
+  } else {
+    frameBuf[idx++] = 0x80 | 126;            // MASK bit + 16-bit extended length
+    frameBuf[idx++] = (len >> 8) & 0xFF;
+    frameBuf[idx++] = len & 0xFF;
+  }
+
+  // Generate random mask
   uint8_t mask[4];
-  for (uint8_t i = 0; i < 4; i++) mask[i] = (uint8_t)random(0, 256);
+  for (uint8_t i = 0; i < 4; i++) {
+    mask[i] = (uint8_t)random(0, 256);
+    frameBuf[idx++] = mask[i];
+  }
 
-  wifiClient.write(header, h);
-  wifiClient.write(mask, 4);
+  // Mask payload into the buffer
+  for (size_t i = 0; i < len; i++) {
+    frameBuf[idx++] = (uint8_t)payload[i] ^ mask[i & 3];
+  }
 
-  // Mask and send in blocks so we never need a full-size copy of the payload.
-  uint8_t buf[64];
-  size_t  sent = 0;
-  while (sent < len) {
-    size_t n = min((size_t)sizeof(buf), len - sent);
-    for (size_t i = 0; i < n; i++) {
-      buf[i] = (uint8_t)payload[sent + i] ^ mask[(sent + i) & 3];
-    }
-    if (wifiClient.write(buf, n) != n) { wsConnected = false; return; }
-    sent += n;
+  // Send the entire frame in a single write operation
+  if (!writeWithTimeout(frameBuf, idx)) {
+    wsConnected = false;
+    wifiClient.stop();
   }
 }
 
@@ -437,12 +510,68 @@ void logToBackend(const char* level, const String& msg) {
   wsSendText(out);
 }
 
+void drawFlatFrame(const uint8_t flat[96]) {
+  uint32_t frame[3] = { 0, 0, 0 };
+  for (int i = 0; i < 96; i++) {
+    int wordIdx = i / 32;
+    int bitIdx = 31 - (i % 32);
+    if (flat[i]) {
+      frame[wordIdx] |= (1UL << bitIdx);
+    }
+  }
+  matrix.loadFrame(frame);
+}
+
+void updateStatusLEDs() {
+  static uint32_t lastBlinkMs = 0;
+  static bool blinkState = false;
+  
+  if (millis() - lastBlinkMs > 500) {
+    lastBlinkMs = millis();
+    blinkState = !blinkState;
+  }
+  
+  if (WiFi.status() != WL_CONNECTED) {
+    if (blinkState) {
+      drawFlatFrame(img_wifi_conn);
+    } else {
+      matrix.clear();
+    }
+  } else if (!wsConnected) {
+    if (blinkState) {
+      drawFlatFrame(img_ws_conn);
+    } else {
+      matrix.clear();
+    }
+  } else {
+    // Solid checkmark
+    drawFlatFrame(img_connected);
+  }
+}
+
 void ensureWiFi() {
   if (WiFi.status() == WL_CONNECTED) return;
+  Serial.print("Connecting to Wi-Fi SSID: ");
+  Serial.println(WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   uint32_t start = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
+    static bool toggle = false;
+    toggle = !toggle;
+    if (toggle) {
+      drawFlatFrame(img_wifi_conn);
+    } else {
+      matrix.clear();
+    }
     delay(250);
+  }
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("Connected successfully! IP Address: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.print("Failed to connect. Wi-Fi status code: ");
+    Serial.println(WiFi.status());
+    drawFlatFrame(img_disconnected);
   }
 }
 
@@ -451,6 +580,7 @@ void ensureWebSocket() {
   if (millis() - lastConnectMs < RECONNECT_MS) return;
   lastConnectMs = millis();
 
+  wifiClient.stop(); // Clean up any stale TCP socket before reconnecting
   ensureWiFi();
   if (WiFi.status() != WL_CONNECTED) return;
 
@@ -523,10 +653,14 @@ void handleTuningUpdate(JsonObject doc) {
   // Motion calibration. Trim is clamped to 1.0 at the top: allowing >1 would
   // scale duty past max_pwm_duty and remove the headroom that keeps the 6 V
   // motors safe on an 8.4 V pack.
-  if (!doc["invert_left"].isNull())
+  if (!doc["invert_left"].isNull()) {
     config.invert_left = (bool)doc["invert_left"];
-  if (!doc["invert_right"].isNull())
+    integLeft = prevErrLeft = 0.0f;
+  }
+  if (!doc["invert_right"].isNull()) {
     config.invert_right = (bool)doc["invert_right"];
+    integRight = prevErrRight = 0.0f;
+  }
   if (!doc["trim_left"].isNull())
     config.trim_left = constrain((float)doc["trim_left"], 0.5f, 1.0f);
   if (!doc["trim_right"].isNull())
@@ -563,6 +697,14 @@ void handleMessage(const String& payload) {
     // Nav2 / manual drive. Clamped to the *runtime* limits, not compiled ones.
     float lin = doc["linear_mm_s"]   | 0.0f;
     float ang = doc["angular_mdeg_s"] | 0.0f;
+    
+    // Auto-arm if moving
+    if (lin != 0.0f || ang != 0.0f) {
+      config.running   = true;
+      collisionLatched = false;
+      digitalWrite(PIN_NSLEEP, HIGH);
+    }
+    
     cmdLinear  = constrain(lin, -(float)config.max_linear_speed,
                                  (float)config.max_linear_speed);
     cmdAngular = constrain(ang, -(float)config.max_angular_speed,
@@ -641,6 +783,10 @@ void updateWheelSetpoints() {
 
 float pidStep(float target, float meas, float dt,
               float& integ, float& prevErr) {
+  if (fabsf(target) < 1.0f) {
+    integ = prevErr = 0.0f;
+    return 0.0f;
+  }
   float err = target - meas;
   integ += err * dt;
   // Anti-windup: bound the integral to what the duty cap can express.
@@ -648,11 +794,17 @@ float pidStep(float target, float meas, float dt,
   integ = constrain(integ, -iLimit, iLimit);
   float deriv = (dt > 0.0f) ? (err - prevErr) / dt : 0.0f;
   prevErr = err;
-  float out = config.pid_kp * err + config.pid_ki * integ + config.pid_kd * deriv;
+
+  // Velocity Feedforward: map setpoint directly to base PWM duty for instant response
+  float ff = (target / max(1.0f, (float)config.max_linear_speed)) * (float)config.max_pwm_duty;
+  float out = ff + config.pid_kp * err + config.pid_ki * integ + config.pid_kd * deriv;
   return constrain(out, -(float)config.max_pwm_duty, (float)config.max_pwm_duty);
 }
 
 void controlStep(float dt) {
+  // Ensure DRV8833 sleep state tracks firmware run-state
+  digitalWrite(PIN_NSLEEP, config.running ? HIGH : LOW);
+
   // --- measure wheel velocities from encoder deltas -----------------------
   noInterrupts();
   long l = encLeftTicks;
@@ -754,6 +906,11 @@ void controlStep(float dt) {
     floorDuty = (float)min(config.kick_duty, config.max_pwm_duty);
   }
 
+  // Extra floor duty when turning in place to scrub tyres across the floor
+  if (cmdLinear == 0.0f && cmdAngular != 0.0f) {
+    floorDuty = max(floorDuty, (float)min(110, config.max_pwm_duty));
+  }
+
   outLeft  = pidStep(targetLeftMmS,  measLeftMmS,  dt, integLeft,  prevErrLeft);
   outRight = pidStep(targetRightMmS, measRightMmS, dt, integRight, prevErrRight);
 
@@ -763,9 +920,9 @@ void controlStep(float dt) {
   writeMotor(PIN_BIN1, PIN_BIN2, dutyRight);
 
   // Compare what we commanded against what the wheels actually did.
-  checkWheelSignSanity(signCheckLeft,  dutyLeft,  measLeftMmS,
+  checkWheelSignSanity(signCheckLeft,  (int)outLeft,  measLeftMmS,
                        "L", "invert_left");
-  checkWheelSignSanity(signCheckRight, dutyRight, measRightMmS,
+  checkWheelSignSanity(signCheckRight, (int)outRight, measRightMmS,
                        "R", "invert_right");
 }
 
@@ -813,6 +970,7 @@ void sendOdom() {
 // ---------------------------------------------------------------------------
 void setup() {
   Serial.begin(115200);
+  matrix.begin();
 
   pinMode(PIN_NSLEEP, OUTPUT);
   digitalWrite(PIN_NSLEEP, HIGH);        // wake the DRV8833
@@ -848,6 +1006,7 @@ void loop() {
     }
     if (!ws.connected()) {
       wsConnected = false;
+      wifiClient.stop();
       applyStop("websocket closed");
     }
   }
@@ -862,4 +1021,6 @@ void loop() {
     lastOdomMs = now;
     sendOdom();
   }
+
+  updateStatusLEDs();
 }

@@ -193,11 +193,17 @@ class WebRelay(Node):
                     with self._lock:
                         self._ws = ws
                     self.get_logger().info(f"relay connected to {url}")
-                    # Hold the connection open; this relay is send-only, so just
-                    # block on reads to detect closure.
-                    for _ in ws:
+                    # Process inbound messages (such as clear_map)
+                    for raw in ws:
                         if self._stop.is_set():
                             break
+                        try:
+                            msg = json.loads(raw)
+                            if isinstance(msg, dict) and msg.get("type") == "clear_map":
+                                self.get_logger().info("Received clear_map request from backend")
+                                self._call_clear_map_service()
+                        except Exception:
+                            pass
             except Exception as exc:
                 self.get_logger().warning(f"relay link down ({exc}); retrying in 2 s")
             finally:
@@ -205,6 +211,18 @@ class WebRelay(Node):
                     self._ws = None
             if not self._stop.is_set():
                 time.sleep(2.0)
+
+    def _call_clear_map_service(self) -> None:
+        try:
+            from std_srvs.srv import Empty
+            client = self.create_client(Empty, "/slam_toolbox/clear_changes")
+            if not client.wait_for_service(timeout_sec=0.5):
+                self.get_logger().warning("slam_toolbox clear_changes service not available")
+                return
+            client.call_async(Empty.Request())
+            self.get_logger().info("Successfully called /slam_toolbox/clear_changes")
+        except Exception as exc:
+            self.get_logger().error(f"Failed to call clear_changes service: {exc}")
 
     def destroy_node(self) -> bool:
         self._stop.set()

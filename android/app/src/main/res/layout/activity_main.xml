@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#050811">
+
+    <!-- Guideline 50% vertical split -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineCenter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.48" />
+
+    <!-- LEFT PANEL: Animated Robot Eyes -->
+    <FrameLayout
+        android:id="@+id/leftEyeContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#04060C"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/guidelineCenter"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.slambot.sensorhub.EyesView
+            android:id="@+id/eyesView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Overlay for Left: Logo & Status -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_margin="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="#88080C16"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:backgroundTint="#AA0B101E">
+
+            <ImageView
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:src="@drawable/slambot_logo"
+                android:contentDescription="SLAM Bot Logo" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textConnection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SLAM BOT: CONNECTING"
+                    android:textColor="#00E5FF"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/textSensors"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="IMU: Active | Camera: 15 FPS"
+                    android:textColor="#8899B0"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnConfigIp"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_marginStart="8dp"
+                android:text="⚙ IP"
+                android:textSize="10sp"
+                android:textColor="#F0F6FC"
+                android:backgroundTint="#334155"
+                android:paddingHorizontal="8dp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- RIGHT PANEL: Live SLAM Occupancy Map -->
+    <FrameLayout
+        android:id="@+id/rightMapContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#060910"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/guidelineCenter"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.slambot.sensorhub.LiveMapView
+            android:id="@+id/liveMapView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Map Control Overlay Buttons -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="10dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnRecenter"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="🎯 Center"
+                android:textSize="11sp"
+                android:textColor="#F0F6FC"
+                android:backgroundTint="#243048"
+                android:paddingHorizontal="10dp"
+                android:layout_marginEnd="6dp" />
+
+            <Button
+                android:id="@+id/btnFullscreen"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="⛶ Fullscreen"
+                android:textSize="11sp"
+                android:textColor="#041018"
+                android:backgroundTint="#00E5FF"
+                android:paddingHorizontal="10dp" />
+        </LinearLayout>
+
+        <!-- Bottom Action Controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_margin="10dp"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnAutoExplore"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:text="⚡ Auto Explore"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#041018"
+                android:backgroundTint="#00E676"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnEstop"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:text="🛑 E-STOP"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#FF1744" />
+        </LinearLayout>
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

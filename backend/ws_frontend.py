@@ -141,6 +141,31 @@ async def _handle_command(client: Client, msg: dict[str, Any]) -> None:
         HUB.broadcast("trail", {"points": []})
         await _reply(client, True, "trail cleared")
 
+    elif kind == "clear_map":
+        from state import MapState
+        async with STATE.lock:
+            STATE.map = MapState()
+            STATE.pose_trail.clear()
+            STATE.last_trail_point = None
+            STATE.plan = []
+        HUB.broadcast("map", STATE.map.snapshot())
+        HUB.broadcast("trail", {"points": []})
+        HUB.broadcast("plan", {"points": []})
+        
+        # Clear local/embedded ROS bridge SLAM Toolbox map
+        from ros_bridge import BRIDGE
+        ros_cleared = False
+        if BRIDGE.available:
+            ros_cleared = BRIDGE.clear_map()
+            
+        # Broadcast clear command to any connected web relays
+        await broadcast_to_relays({"type": "clear_map"})
+        
+        msg_detail = "Map and pose trail cleared locally"
+        if ros_cleared:
+            msg_detail += " and SLAM Toolbox map reset"
+        await _reply(client, True, msg_detail)
+
     elif kind == "reset_session":
         async with STATE.lock:
             STATE.collision_events.clear()
@@ -200,6 +225,9 @@ async def _handle_control(client: Client, msg: dict[str, Any]) -> None:
         from ros_bridge import BRIDGE
 
         BRIDGE.cancel_navigation()
+        # Also reach the standalone bridge in WSL, which is the process that
+        # actually holds the Nav2 goal handle in the normal deployment.
+        HUB.broadcast("nav_cancel", {"reason": action})
     await _broadcast_status()
     await _reply(client, True, "stopped")
 
@@ -219,12 +247,14 @@ async def _handle_drive(client: Client, msg: dict[str, Any]) -> None:
         return
 
     async with STATE.lock:
-        if not STATE.running:
-            await _reply(client, False, "ignored: bot is stopped — press Start first")
-            return
+        if not STATE.running and (linear != 0.0 or angular != 0.0):
+            STATE.set_running(True)
+            await ws_robot.push_control("start")
+            STATE.logs.emit("system", "info", "RUN state: auto-armed on manual drive")
+
         if STATE.control_mode != "manual":
-            await _reply(client, False, "ignored: control mode is nav2")
-            return
+            STATE.control_mode = "manual"
+            STATE.logs.emit("system", "info", "control mode switched to manual for drivepad")
 
         lin_cap = float(STATE.tuning["max_linear_speed_mm_s"])
         ang_cap = float(STATE.tuning["max_angular_speed_mdeg_s"])
@@ -330,6 +360,10 @@ async def _handle_nav_cmd_vel(msg: dict[str, Any]) -> None:
             max(-lin_cap, min(lin_cap, linear)),
             max(-ang_cap, min(ang_cap, angular)),
         )
+        STATE.nav_linear_mm_s = applied[0]
+        STATE.nav_angular_mdeg_s = applied[1]
+        STATE.nav_until_ms = now_ms() + 500  # expire after 500ms
+        
     await ws_robot.push_cmd_vel(*applied)
 
 
@@ -358,7 +392,19 @@ async def _handle_nav_goal(client: Client, msg: dict[str, Any]) -> None:
 
     from ros_bridge import BRIDGE
 
-    ok, detail = BRIDGE.send_goal(x_m, y_m, theta_rad)
+    if BRIDGE.available:
+        ok, detail = BRIDGE.send_goal(x_m, y_m, theta_rad)
+    else:
+        # The usual deployment: ROS2 lives in WSL and the backend runs on
+        # Windows without rclpy, so the standalone bridge owns the ROS graph.
+        # It is itself a /ws/app client, so broadcasting reaches it. Without
+        # this branch a clicked goal was silently swallowed by the no-op
+        # embedded bridge and the robot never moved.
+        HUB.broadcast(
+            "nav_goal", {"x_m": x_m, "y_m": y_m, "theta_rad": theta_rad}
+        )
+        ok, detail = True, "goal forwarded to the ROS bridge"
+
     async with STATE.lock:
         STATE.logs.emit(
             "nav",
@@ -367,6 +413,15 @@ async def _handle_nav_goal(client: Client, msg: dict[str, Any]) -> None:
         )
     await _reply(client, ok, detail)
 
+
+CONNECTED_RELAYS: set[WebSocket] = set()
+
+async def broadcast_to_relays(msg: dict[str, Any]) -> None:
+    for ws in list(CONNECTED_RELAYS):
+        try:
+            await ws.send_json(msg)
+        except Exception:
+            pass
 
 # ---------------------------------------------------------------------------
 # /ws/relay — ingest from a standalone slam_bot_web_relay node
@@ -380,8 +435,13 @@ async def ws_relay(ws: WebSocket) -> None:
     /map and /plan directly and this endpoint stays idle.
     """
     await ws.accept()
+    CONNECTED_RELAYS.add(ws)
     async with STATE.lock:
+        STATE.ros_available = True
+        STATE.ros_nodes_seen.add("slam_toolbox")
         STATE.logs.emit("system", "info", "ROS web relay connected")
+        status = STATE.status_snapshot()
+    HUB.broadcast("status", status)
 
     try:
         while True:
@@ -404,6 +464,8 @@ async def ws_relay(ws: WebSocket) -> None:
                     STATE.map.stamp_ms = now_ms()
                     STATE.ros_available = True
                     STATE.ros_nodes_seen.add("slam_toolbox")
+                    map_snapshot = STATE.map.snapshot()
+                HUB.broadcast("map", map_snapshot)
 
             elif topic == "ros_plan":
                 points = [
@@ -441,8 +503,13 @@ async def ws_relay(ws: WebSocket) -> None:
     except Exception as exc:
         logger.info("relay link error: %s", exc)
     finally:
+        CONNECTED_RELAYS.discard(ws)
         async with STATE.lock:
+            if not CONNECTED_RELAYS:
+                STATE.ros_available = False
             STATE.logs.emit("system", "warn", "ROS web relay disconnected")
+            status = STATE.status_snapshot()
+        HUB.broadcast("status", status)
 
 
 # ---------------------------------------------------------------------------

@@ -346,15 +346,16 @@ PARAMS: tuple[Param, ...] = (
         name="invert_right",
         label="Invert right motor",
         kind="int",
-        default=1,
+        default=0,
         minimum=0,
         maximum=1,
         step=1,
         section="Motion calibration",
         targets=("arduino",),
         help=(
-            "Defaults to 1: on this chassis the right motor's leads are "
-            "handed, confirmed on the bench. Change only if you re-solder it."
+            "1 flips the right motor's direction. Set this if the wheel spins "
+            "backwards; it is applied to the duty only, so encoder direction "
+            "and odometry stay correct."
         ),
     ),
     Param(

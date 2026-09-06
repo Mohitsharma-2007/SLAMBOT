@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SLAM Bot — System Initializer</title>
+  <style>
+    :root {
+      --bg: #080b11;
+      --panel: rgba(18, 24, 38, 0.85);
+      --border: rgba(56, 75, 102, 0.4);
+      --accent: #00e5ff;
+      --ok: #00e676;
+      --warn: #ffd600;
+      --err: #ff1744;
+      --text: #f0f6fc;
+      --text-dim: #8b9bb4;
+      --mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: radial-gradient(circle at 50% 10%, #111e38 0%, #06080d 100%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+
+    .brand-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title span {
+      color: var(--accent);
+      text-shadow: 0 0 16px rgba(0, 229, 255, 0.5);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(0, 229, 255, 0.1);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+
+    .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(0, 229, 255, 0.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .service-card {
+      background: rgba(28, 36, 54, 0.5);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .service-name {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+
+    .service-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #445;
+    }
+
+    .dot.running {
+      background: var(--ok);
+      box-shadow: 0 0 10px rgba(0, 230, 118, 0.6);
+    }
+
+    .dot.pending {
+      background: var(--warn);
+      box-shadow: 0 0 8px rgba(255, 214, 0, 0.5);
+    }
+
+    .dot.error {
+      background: var(--err);
+      box-shadow: 0 0 8px rgba(255, 23, 68, 0.6);
+    }
+
+    /* Terminal Console */
+    .console-box {
+      background: #030508;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      height: 200px;
+      padding: 12px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .console-line {
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+
+    .console-line.info { color: #88bbff; }
+    .console-line.wsl { color: #00e5ff; }
+    .console-line.ok { color: var(--ok); }
+    .console-line.warn { color: var(--warn); }
+    .console-line.err { color: var(--err); }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn {
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #041018;
+      box-shadow: 0 0 16px rgba(0, 229, 255, 0.4);
+    }
+
+    .btn-primary:hover {
+      background: #33ecff;
+      box-shadow: 0 0 24px rgba(0, 229, 255, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(56, 75, 102, 0.3);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(56, 75, 102, 0.5);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <img src="SLAMBOT.png" alt="SLAM BOT Logo" style="width: 42px; height: 42px; border-radius: 8px; filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.6));" />
+        <div class="brand-title">SLAM <span>BOT</span> Command Center</div>
+      </div>
+      <div id="mainBadge" class="status-badge">
+        <div class="spinner"></div>
+        <span id="badgeText">Initializing Stack...</span>
+      </div>
+    </div>
+
+    <!-- Phone Connection IP Info -->
+    <div style="background: rgba(0, 229, 255, 0.08); border: 1px dashed rgba(0, 229, 255, 0.4); border-radius: 10px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-dim); font-weight: 700; letter-spacing: 0.05em;">Phone / Hardware Connection IP:</div>
+        <div id="localIpText" style="font-family: var(--mono); font-size: 16px; color: var(--accent); font-weight: 700; margin-top: 2px;">10.180.122.189:8000</div>
+      </div>
+      <div style="font-size: 12px; color: #88bbff; background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 6px;">
+        📱 Enter this IP in the Android App
+      </div>
+    </div>
+
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-name">FastAPI Backend (Host: 8000)</div>
+        <div class="service-status">
+          <div id="backendDot" class="dot pending"></div>
+          <span id="backendText">Starting Server...</span>
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-name">ROS2 & Nav2 (WSL2 Humble)</div>
+        <div class="service-status">
+          <div id="rosDot" class="dot pending"></div>
+          <span id="rosText">Launching WSL...</span>
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-name">React Dashboard UI</div>
+        <div class="service-status">
+          <div id="uiDot" class="dot pending"></div>
+          <span id="uiText">Preparing Assets...</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="console" class="console-box">
+      <div class="console-line info">[System]: Starting SLAM Bot orchestration engine...</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="window.electronAPI.restartAll()">🔄 Restart Stack</button>
+      <button id="launchBtn" class="btn btn-primary" onclick="window.electronAPI.launchDashboard()">
+        Launch Dashboard 🚀
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const logBox = document.getElementById('console');
+    const backendDot = document.getElementById('backendDot');
+    const backendText = document.getElementById('backendText');
+    const rosDot = document.getElementById('rosDot');
+    const rosText = document.getElementById('rosText');
+    const uiDot = document.getElementById('uiDot');
+    const uiText = document.getElementById('uiText');
+    const mainBadge = document.getElementById('mainBadge');
+    const badgeText = document.getElementById('badgeText');
+    const launchBtn = document.getElementById('launchBtn');
+
+    function appendLog(text, level = 'info') {
+      const line = document.createElement('div');
+      line.className = `console-line ${level}`;
+      line.textContent = text;
+      logBox.appendChild(line);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    if (window.electronAPI) {
+      window.electronAPI.onLog((data) => {
+        appendLog(`[${data.source}]: ${data.message}`, data.level || 'info');
+      });
+
+      window.electronAPI.onStatusUpdate((status) => {
+        if (status.localIp) {
+          const ipEl = document.getElementById('localIpText');
+          if (ipEl) ipEl.textContent = `${status.localIp}:8000`;
+        }
+        if (status.backend) {
+          backendDot.className = 'dot running';
+          backendText.textContent = 'Active (Port 8000)';
+        }
+        if (status.ros) {
+          rosDot.className = 'dot running';
+          rosText.textContent = 'Nodes Running';
+        }
+        if (status.ready) {
+          uiDot.className = 'dot running';
+          uiText.textContent = 'Ready';
+          mainBadge.style.background = 'rgba(0, 230, 118, 0.15)';
+          mainBadge.style.borderColor = 'rgba(0, 230, 118, 0.4)';
+          mainBadge.style.color = '#00e676';
+          badgeText.textContent = 'All Systems Operational';
+          const spinner = mainBadge.querySelector('.spinner');
+          if (spinner) spinner.style.display = 'none';
+          launchBtn.style.display = 'block';
+          
+          // Auto launch after 2 seconds
+          setTimeout(() => {
+            window.electronAPI.launchDashboard();
+          }, 1800);
+        }
+      });
+    }
+  </script>
+</body>
+</html>

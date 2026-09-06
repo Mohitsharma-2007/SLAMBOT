@@ -25,6 +25,10 @@ setup(
             "bridge_node = slam_bot_bridge.bridge_node:main",
             # Forwards ROS topics to the backend so the browser can render them.
             "web_relay = slam_bot_bridge.web_relay:main",
+            # Relays phone IMU, GPS, and Camera streams from WebSocket to ROS2
+            "phone_relay = slam_bot_bridge.phone_relay:main",
+            # Autonomous frontier exploration mapping controller
+            "explore_node = slam_bot_bridge.explore_node:main",
         ],
     },
 )

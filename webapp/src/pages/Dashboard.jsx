@@ -100,10 +100,17 @@ export default function Dashboard() {
     const scale = speedPct / 100
     let linear = 0
     let angular = 0
-    if (keys.has('forward')) linear += maxLinear * scale
-    if (keys.has('back')) linear -= maxLinear * scale
-    if (keys.has('left')) angular += maxAngular * scale
-    if (keys.has('right')) angular -= maxAngular * scale
+    
+    // Remapped for user's wiring configuration:
+    // - Front button (forward) makes bot move Forward (needs negative angular)
+    // - Back button (back) makes bot move Backward (needs positive angular)
+    // - Left button (left) makes bot turn Left (needs negative linear)
+    // - Right button (right) makes bot turn Right (needs positive linear)
+    if (keys.has('forward')) angular -= maxAngular * scale
+    if (keys.has('back')) angular += maxAngular * scale
+    if (keys.has('left')) linear -= maxLinear * scale
+    if (keys.has('right')) linear += maxLinear * scale
+    
     drive(linear, angular)
   }, [drive, maxLinear, maxAngular, speedPct])
 
