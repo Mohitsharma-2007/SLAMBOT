@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SLAM Bot Academic Paper Studio · IEEE Conference (3-4 Pages) & Q1 SCI Journal (8-12 Pages)</title>
 
-  <!-- MathJax for Mathematical Formulations -->
+  <!-- MathJax for High-Fidelity Mathematical Typesetting -->
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-  <!-- Chart.js for High-Fidelity Interactive Data Visualizations -->
+  <!-- Chart.js for Live Interactive Graphs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -17,8 +17,8 @@
 
     :root {
       --bg-dark: #070a13;
-      --panel-bg: rgba(13, 20, 36, 0.90);
-      --panel-border: rgba(56, 82, 120, 0.4);
+      --panel-bg: rgba(13, 20, 36, 0.92);
+      --panel-border: rgba(56, 82, 120, 0.45);
       --accent: #00e5ff;
       --accent-glow: rgba(0, 229, 255, 0.35);
       --accent-dim: #0091ea;
@@ -49,8 +49,8 @@
 
     /* --- SIDEBAR WORKBENCH --- */
     .sidebar {
-      width: 460px;
-      min-width: 460px;
+      width: 450px;
+      min-width: 450px;
       height: 100vh;
       background: var(--panel-bg);
       border-right: 1px solid var(--panel-border);
@@ -61,7 +61,7 @@
     }
 
     .sidebar-header {
-      padding: 18px 22px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--panel-border);
       display: flex;
       justify-content: space-between;
@@ -110,12 +110,10 @@
       display: flex;
       background: rgba(7, 11, 20, 0.85);
       border-bottom: 1px solid var(--panel-border);
-      overflow-x: auto;
     }
 
     .nav-tab-btn {
       flex: 1;
-      min-width: 75px;
       padding: 12px 6px;
       background: none;
       border: none;
@@ -127,7 +125,6 @@
       letter-spacing: 0.04em;
       border-bottom: 2px solid transparent;
       transition: all 0.2s;
-      white-space: nowrap;
       text-align: center;
     }
 
@@ -140,7 +137,7 @@
     .tab-content {
       flex: 1;
       overflow-y: auto;
-      padding: 20px 22px;
+      padding: 18px 20px;
     }
 
     .tab-pane {
@@ -224,19 +221,9 @@
       background: rgba(35, 50, 75, 0.9);
     }
 
-    .btn-copy {
-      background: rgba(0, 229, 255, 0.15);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-    }
-    .btn-copy:hover {
-      background: var(--accent);
-      color: #030812;
-    }
-
     /* Sidebar Footer */
     .sidebar-footer {
-      padding: 14px 22px;
+      padding: 14px 20px;
       border-top: 1px solid var(--panel-border);
       background: rgba(9, 14, 26, 0.95);
       display: flex;
@@ -249,7 +236,7 @@
       height: 100vh;
       overflow-y: auto;
       background: #04070d;
-      padding: 30px 20px 80px;
+      padding: 24px 20px 80px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -300,6 +287,9 @@
     .paper-stack {
       width: 100%;
       max-width: 880px;
+    }
+
+    .paper-container {
       display: flex;
       flex-direction: column;
       gap: 36px;
@@ -310,7 +300,7 @@
       min-height: 1140px;
       background: var(--paper-bg);
       color: var(--paper-text);
-      padding: 60px 65px;
+      padding: 55px 65px;
       border-radius: 2px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), 0 0 1px rgba(0,0,0,0.4);
       font-family: 'Crimson Pro', 'Times New Roman', Georgia, serif;
@@ -335,12 +325,12 @@
 
     .paper-footer {
       position: absolute;
-      bottom: 28px;
+      bottom: 24px;
       left: 65px;
       right: 65px;
       display: flex;
       justify-content: space-between;
-      border-top: 0.75px solid #e2e8f0;
+      border-top: 0.75px solid #cbd5e1;
       padding-top: 6px;
       font-family: 'Inter', sans-serif;
       font-size: 10px;
@@ -350,11 +340,11 @@
     /* IEEE Title & Author Formatting */
     .paper-title-area {
       text-align: center;
-      margin-bottom: 26px;
+      margin-bottom: 24px;
     }
 
     .paper-main-title {
-      font-size: 23px;
+      font-size: 22px;
       font-weight: 700;
       color: var(--paper-heading);
       line-height: 1.25;
@@ -377,7 +367,7 @@
 
     /* Abstract Block */
     .paper-abstract-container {
-      margin: 18px 0 26px;
+      margin: 16px 0 24px;
       padding: 14px 18px;
       background: #f8fafc;
       border-left: 3.5px solid var(--paper-heading);
@@ -517,7 +507,7 @@
 
     .code-block {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 10.5px;
+      font-size: 10px;
       background: #f1f5f9;
       border: 1px solid #cbd5e1;
       border-radius: 4px;
@@ -529,7 +519,7 @@
     }
 
     .ref-item {
-      font-size: 10.5px;
+      font-size: 10px;
       line-height: 1.35;
       margin-bottom: 5px;
       text-indent: -1.5em;
@@ -570,7 +560,7 @@
       <button class="nav-tab-btn active" onclick="selectNavTab('tab-editor')">Paper Editor</button>
       <button class="nav-tab-btn" onclick="selectNavTab('tab-graphs')">Graphs (6)</button>
       <button class="nav-tab-btn" onclick="selectNavTab('tab-figures')">Image Upload</button>
-      <button class="nav-tab-btn" onclick="selectNavTab('tab-pcb')">FLUX PCB</button>
+      <button class="nav-tab-btn" onclick="selectNavTab('tab-timeline')">Literature</button>
       <button class="nav-tab-btn" onclick="selectNavTab('tab-models')">AI Models</button>
     </nav>
 
@@ -578,7 +568,7 @@
       <!-- TAB 1: PAPER METADATA & CONTENT EDITOR -->
       <div class="tab-pane active" id="tab-editor">
         <div class="form-group">
-          <label>Publication Mode</label>
+          <label>Publication View</label>
           <select class="form-control" id="publication-format" onchange="changeFormatFromSelect()">
             <option value="conf">IEEE Conference (3–4 Pages · 2-Column Standard)</option>
             <option value="journal">Q1 SCI / Scopus Journal (8–12 Pages · Extended Manuscript)</option>
@@ -588,25 +578,25 @@
         <div class="form-group">
           <label>Title Selection / Preset</label>
           <select class="form-control" id="title-dropdown" onchange="pickPresetTitle()">
-            <option value="custom">-- Custom Manuscript Title --</option>
+            <option value="custom">-- Choose or Write Custom Title --</option>
             <option value="A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration">1. A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM (Recommended Conf Title)</option>
             <option value="Edge-Decoupled Heterogeneous Multi-Microcontroller Architecture for Real-Time 2D LiDAR Graph SLAM and Autonomous Frontier Exploration in Resource-Constrained Ground Robotics">2. Edge-Decoupled Heterogeneous Multi-Microcontroller Architecture for Real-Time 2D LiDAR Graph SLAM (Recommended Q1 Journal Title)</option>
-            <option value="Autonomous 2D LiDAR SLAM with Heterogeneous Dual-MCU Telemetry and Asynchronous ROS 2 Frontier Exploration: An Edge-Decoupled Framework">3. Autonomous 2D LiDAR SLAM with Heterogeneous Dual-MCU Telemetry and Asynchronous ROS 2 Frontier Exploration</option>
+            <option value="Eliminating Embedded Interrupt Starvation and Memory Fragmentation in Autonomous 2D SLAM Robots via Heterogeneous Dual-MCU Telemetry">3. Eliminating Embedded Interrupt Starvation and Memory Fragmentation via Dual-MCU Telemetry</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>Paper Title</label>
+          <label>Manuscript Title</label>
           <input type="text" class="form-control" id="input-title" value="A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration" oninput="syncEdits()" />
         </div>
 
         <div class="form-group">
-          <label>Primary Author(s)</label>
+          <label>Authors</label>
           <input type="text" class="form-control" id="input-authors" value="Mohit Sharma, Senior Member, IEEE, and Research Collaborators" oninput="syncEdits()" />
         </div>
 
         <div class="form-group">
-          <label>Affiliation & Institution</label>
+          <label>Affiliation</label>
           <input type="text" class="form-control" id="input-affil" value="Department of Robotics and Automation Engineering · Robotics Systems Laboratory" oninput="syncEdits()" />
         </div>
 
@@ -624,7 +614,7 @@
       <!-- TAB 2: MULTIPLE INTERACTIVE GRAPHS -->
       <div class="tab-pane" id="tab-graphs">
         <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.4;">
-          This studio includes <strong>6 pre-configured experimental benchmark graphs</strong> rendered in real-time with Chart.js. You can customize data points below.
+          Customize any of the <strong>6 interactive experimental graphs</strong> embedded directly across the paper sheets.
         </div>
 
         <div class="form-group">
@@ -640,7 +630,7 @@
         </div>
 
         <div class="form-group">
-          <label>Graph Title</label>
+          <label>Chart Title</label>
           <input type="text" class="form-control" id="graph-title-field" value="Rotational Odometry Drift per 360° Turn" />
         </div>
 
@@ -658,18 +648,18 @@
         </div>
 
         <div class="form-group">
-          <label>Series Label & Data Points (Comma separated)</label>
+          <label>Series Label & Values (Comma separated)</label>
           <input type="text" class="form-control" id="graph-ds-label" value="Rotational Error (°)" style="margin-bottom:6px;" />
           <input type="text" class="form-control" id="graph-ds-values" value="8.45, 14.20, 1.85" />
         </div>
 
-        <button class="btn btn-primary" style="width:100%;" onclick="applyCustomChartUpdates()">📊 Render & Update Selected Chart</button>
+        <button class="btn btn-primary" style="width:100%;" onclick="applyCustomChartUpdates()">📊 Update Selected Chart</button>
       </div>
 
       <!-- TAB 3: IMAGE & FIGURE IMPORT -->
       <div class="tab-pane" id="tab-figures">
         <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.4;">
-          Upload your circuit schematics, robot chassis photos, or arena maps. Images are converted into Base64 and stored in local memory.
+          Upload your circuit schematics, robot chassis photos, or arena maps. Images are stored in Base64 and embedded into paper figures.
         </div>
 
         <div class="form-group">
@@ -694,63 +684,67 @@
         <div id="image-preview-thumbnail" style="margin-top:10px; text-align:center;"></div>
       </div>
 
-      <!-- TAB 4: FLUX PCB PROMPT & SPECS -->
-      <div class="tab-pane" id="tab-pcb">
+      <!-- TAB 4: LITERATURE TIMELINE -->
+      <div class="tab-pane" id="tab-timeline">
         <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.4;">
-          Comprehensive production-ready prompt for <strong>FLUX.ai</strong> to design the integrated carrier board with future expansion headers (Display, Camera, MIC, Audio Out).
+          Chronological breakdown of historical SLAM research, their limitations, and the specific gaps reduced by SLAM Bot.
         </div>
 
-        <button class="btn btn-copy" style="width:100%; margin-bottom:14px;" onclick="copyFluxPrompt()">📋 Copy FLUX Prompt to Clipboard</button>
+        <div style="font-size:11.5px; line-height:1.4;">
+          <div style="padding:10px; background:rgba(0,0,0,0.3); border-left:3px solid var(--accent); margin-bottom:10px; border-radius:4px;">
+            <strong style="color:var(--accent);">1997 · Yamauchi [1] (Frontier Exploration)</strong><br/>
+            <em>Achievement:</em> Defined boundary extraction ($P=0$ touches $P=-1$).<br/>
+            <span style="color:var(--err);">Limitation:</span> 2D simulation only; lacked dynamic safety inflation & Nav2 replanning.<br/>
+            <span style="color:var(--ok);">SLAM Bot Fix:</span> Live ROS 2 BFS clustering with obstacle cost dilation.
+          </div>
 
-        <div class="code-block" id="flux-prompt-preview" style="max-height:360px; overflow-y:auto; font-size:10px;">
-Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB named "SLAM_BOT_MAINBOARD_V2" for an autonomous 2D LiDAR differential-drive mobile robot.
+          <div style="padding:10px; background:rgba(0,0,0,0.3); border-left:3px solid var(--accent); margin-bottom:10px; border-radius:4px;">
+            <strong style="color:var(--accent);">2005 · Thrun et al. [3] (Probabilistic SLAM)</strong><br/>
+            <em>Achievement:</em> Bayesian EKF and Rao-Blackwellized particle filters.<br/>
+            <span style="color:var(--err);">Limitation:</span> Particle depletion in multi-loop spaces; O(M*K) memory complexity.<br/>
+            <span style="color:var(--ok);">SLAM Bot Fix:</span> Ceres sparse non-linear pose-graph optimization (`slam_toolbox`).
+          </div>
 
-1. POWER TREE:
-- 2S LiPo (7.4V) input with reverse polarity P-MOSFET (AO3401A) and 2.6A PPTC fuse.
-- Raw VM Rail decoupled with 470uF low-ESR cap for DRV8833 motor driver.
-- 5.00V 3A synchronous buck converter (MP1584/TPS54302) with 470uF output buffer.
-- 3.3V 1A LDO (AMS1117-3.3) for peripheral logic.
+          <div style="padding:10px; background:rgba(0,0,0,0.3); border-left:3px solid var(--accent); margin-bottom:10px; border-radius:4px;">
+            <strong style="color:var(--accent);">2016 · Hess et al. [7] (Cartographer)</strong><br/>
+            <em>Achievement:</em> Submap branch-and-bound scan matching.<br/>
+            <span style="color:var(--err);">Limitation:</span> Heavy CPU/RAM usage; unsuitable for low-power edge robotics.<br/>
+            <span style="color:var(--ok);">SLAM Bot Fix:</span> Distributed WebSocket gateway offloading graph optimization to edge compute.
+          </div>
 
-2. MICROCONTROLLER SOCKETS:
-- Arduino Uno R4 WiFi standard header socket (50Hz PID, Quadrature interrupts on D2, D3, D4, D5).
-- NodeMCU ESP8266 socket (Hardware UART RX/TX connected to RPLIDAR A1 at 115200 baud).
-
-3. SENSORY & MOTOR CONNECTORS:
-- 5-pin JST-XH for Slamtec RPLIDAR A1 with 2N7002 PWM motor control.
-- 2x 6-pin JST-XH for Left/Right N20 motors and quadrature encoders.
-
-4. FUTURE EXPANSION HEADERS:
-- I2C Display: 4-pin OLED (SSD1306) + 8-pin SPI TFT (ST7789) header.
-- Camera: 16-pin ESP32-CAM daughterboard header or 24-pin DVP connector.
-- Microphone: 6-pin I2S digital mic header (INMP441: SD, WS, SCK).
-- Audio Output: MAX98357A I2S 3.2W DAC/Amp footprint + 2-pin screw terminal for 3W speaker.
+          <div style="padding:10px; background:rgba(0,0,0,0.3); border-left:3px solid var(--accent); margin-bottom:10px; border-radius:4px;">
+            <strong style="color:var(--accent);">2017 · ROBOTIS [8] (TurtleBot 3)</strong><br/>
+            <em>Achievement:</em> Standard reference robot with OpenCR + Raspberry Pi.<br/>
+            <span style="color:var(--err);">Limitation:</span> High BOM cost (> $650); battery drain from onboard SBC.<br/>
+            <span style="color:var(--ok);">SLAM Bot Fix:</span> Under $150 BOM utilizing decoupled sub-$5 microcontrollers (Uno R4 + ESP8266).
+          </div>
         </div>
       </div>
 
       <!-- TAB 5: FUTURE AI/ML ARCHITECTURES -->
       <div class="tab-pane" id="tab-models">
         <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
-          Tensor pipelines and architectural blueprints for future machine learning modules:
+          Tensor pipelines and architectural blueprints for prospective machine learning modules:
         </div>
 
         <div style="padding:12px; background:rgba(0,0,0,0.35); border-left:3px solid var(--accent); margin-bottom:12px; border-radius:4px;">
           <strong style="color:var(--accent); font-size:12px;">1. Deep Reinforcement Learning (PPO) Frontier Policy</strong>
           <p style="font-size:11.5px; margin-top:4px; color:var(--text-muted);">
-            Actor-Critic network (3-channel Conv2D + Dense) trained via PPO. Ingests local costmaps and unmapped frontiers to predict continuous velocity $(v, \omega)$, accelerating exploration by 35%.
+            Actor-Critic network (3-channel Conv2D + Dense) trained via PPO. Ingests local costmaps and unmapped frontiers to predict continuous velocity (v, w), accelerating exploration by 35%.
           </p>
         </div>
 
         <div style="padding:12px; background:rgba(0,0,0,0.35); border-left:3px solid var(--ok); margin-bottom:12px; border-radius:4px;">
           <strong style="color:var(--ok); font-size:12px;">2. Vision-Transformer (ViT) Topological Loop Closure</strong>
           <p style="font-size:11.5px; margin-top:4px; color:var(--text-muted);">
-            ViT-Small backbone producing 512-D latent keyframe descriptors. Eliminates 2D LiDAR longitudinal slip in symmetric corridors through cosine cross-matching ($S > 0.88$).
+            ViT-Small backbone producing 512-D latent keyframe descriptors. Eliminates 2D LiDAR longitudinal slip in symmetric corridors through cosine cross-matching (S > 0.88).
           </p>
         </div>
 
         <div style="padding:12px; background:rgba(0,0,0,0.35); border-left:3px solid var(--warn); border-radius:4px;">
           <strong style="color:var(--warn); font-size:12px;">3. Neural Residual Odometry Compensator (NROC)</strong>
           <p style="font-size:11.5px; margin-top:4px; color:var(--text-muted);">
-            Bidirectional LSTM model (2 layers, 64 hidden units) mapping PWM, encoder differentials, and battery voltage to physical slip vectors $(\delta x, \delta y, \delta \theta)$.
+            Bidirectional LSTM model (2 layers, 64 hidden units) mapping PWM, encoder differentials, and battery voltage to physical slip vectors (dx, dy, dtheta).
           </p>
         </div>
       </div>
@@ -778,284 +772,28 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
 
     <!-- CONTAINER FOR PAGINATED PAPER SHEETS -->
     <div class="paper-stack" id="paper-stack">
-      <!-- CONTENT WILL BE RENDERED DYNAMICALLY BY JAVASCRIPT FOR ACCURACY -->
-    </div>
-  </main>
 
-  <script>
-    // =========================================================================
-    // STATE & DATA STRUCTURES
-    // =========================================================================
-    const STORAGE_KEY_V2 = "SLAMBOT_PAPER_STUDIO_STATE_V2";
-    let activeMode = "conf"; // "conf" or "journal"
-    let chartInstances = {};
-
-    const DEFAULT_CONFIG = {
-      title: "A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration",
-      authors: "Mohit Sharma, Senior Member, IEEE, and Research Collaborators",
-      affil: "Department of Robotics and Automation Engineering · Robotics Systems Laboratory",
-      abstract: "Autonomous mobile robots navigating GPS-denied indoor spaces require deterministic motor regulation, high-bandwidth range-finding telemetry, and low-latency spatial state estimation. Conventional entry-level robotic architectures often suffer from a severe architectural bottleneck: consolidating high-baud laser serial acquisition, real-time microsecond-level quadrature encoder counting, closed-loop velocity regulation, and network communication onto a single microcontroller. This causes interrupt starvation, dropped encoder edges, serial buffer overflows, and motor-induced brownouts. This paper introduces SLAM Bot, a high-performance differential-drive mobile robotics framework featuring an edge-decoupled, heterogeneous dual-microcontroller architecture and a distributed ROS 2 Humble navigation ecosystem. Physical mobility is governed by an Arduino Uno R4 WiFi executing a 50 Hz deterministic PID velocity loop with 700 CPR quadrature encoder feedback, while sensor telemetry is offloaded to a dedicated NodeMCU ESP8266. Experimental benchmarks demonstrate sub-centimeter loop-closure residuals (0.8 cm), rotational dead-reckoning drift below 1.85° per 360° turn, and zero watchdog crashes over continuous autonomous exploration.",
-      keywords: "Simultaneous Localization and Mapping (SLAM), ROS 2 Humble, Frontier Exploration, Differential Drive, Dual-MCU Architecture, LiDAR Telemetry, Ceres Optimization.",
-      uploadedImages: {
-        schematic: null,
-        chassis: null,
-        arena: null
-      },
-      charts: {
-        chart1: {
-          title: "Rotational Odometry Drift per 360° Turn",
-          type: "bar",
-          labels: ["Single-MCU Baseline", "Uncalibrated Setup", "SLAM Bot (Decoupled)"],
-          label: "Rotational Drift (°)",
-          data: [8.45, 14.20, 1.85]
-        },
-        chart2: {
-          title: "50 Hz Closed-Loop PID Velocity Step Response",
-          type: "line",
-          labels: ["0ms", "20ms", "40ms", "60ms", "80ms", "100ms", "120ms", "140ms", "160ms"],
-          label: "Velocity (mm/s)",
-          data: [0, 45, 110, 185, 202, 200, 200, 200, 200]
-        },
-        chart3: {
-          title: "Ceres SLAM Loop Closure Residual Minimization",
-          type: "line",
-          labels: ["Iter 1", "Iter 2", "Iter 3", "Iter 4", "Iter 5", "Iter 6"],
-          label: "Residual Error (cm)",
-          data: [7.8, 4.3, 2.1, 1.2, 0.9, 0.8]
-        },
-        chart4: {
-          title: "Dynamic Heap RAM vs Static Allocation over 60 mins",
-          type: "line",
-          labels: ["0m", "10m", "20m", "30m", "40m", "50m", "60m"],
-          label: "Free Heap RAM (kB)",
-          data: [38.4, 38.4, 38.4, 38.4, 38.4, 38.4, 38.4]
-        },
-        chart5: {
-          title: "Microcontroller Telemetry Latency Distribution",
-          type: "bar",
-          labels: ["2-3ms", "3-4ms", "4-5ms", "5-6ms", "6-8ms", ">8ms"],
-          label: "Packet Count (%)",
-          data: [12.4, 68.2, 14.5, 3.8, 0.9, 0.2]
-        },
-        chart6: {
-          title: "Autonomous Frontier Coverage vs Time",
-          type: "line",
-          labels: ["0s", "45s", "90s", "135s", "180s", "222s"],
-          label: "Explored Area (m²)",
-          data: [0.0, 5.8, 14.2, 21.0, 25.4, 27.0]
-        }
-      }
-    };
-
-    let studioState = { ...DEFAULT_CONFIG };
-
-    // =========================================================================
-    // INITIALIZATION & EVENT LISTENERS
-    // =========================================================================
-    window.addEventListener("DOMContentLoaded", () => {
-      loadSavedState();
-      renderActivePaper();
-    });
-
-    function selectNavTab(tabId) {
-      document.querySelectorAll(".nav-tab-btn").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
-      event.target.classList.add("active");
-      document.getElementById(tabId).classList.add("active");
-    }
-
-    function setPublicationMode(mode) {
-      activeMode = mode;
-      document.getElementById("btn-mode-conf").classList.toggle("active", mode === "conf");
-      document.getElementById("btn-mode-journal").classList.toggle("active", mode === "journal");
-      document.getElementById("publication-format").value = mode;
-      
-      const label = document.getElementById("current-mode-label");
-      if (mode === "conf") {
-        label.innerText = "IEEE Conference Paper (3–4 Pages · 2-Column Standard)";
-        if (studioState.title.includes("Heterogeneous Multi-Microcontroller")) {
-          studioState.title = "A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration";
-          document.getElementById("input-title").value = studioState.title;
-        }
-      } else {
-        label.innerText = "Q1 SCI Journal Paper (8–12 Pages · Extended Manuscript)";
-        if (studioState.title.startsWith("A Decoupled")) {
-          studioState.title = "Edge-Decoupled Heterogeneous Multi-Microcontroller Architecture for Real-Time 2D LiDAR Graph SLAM and Autonomous Frontier Exploration in Resource-Constrained Ground Robotics";
-          document.getElementById("input-title").value = studioState.title;
-        }
-      }
-      renderActivePaper();
-      persistState();
-    }
-
-    function changeFormatFromSelect() {
-      const mode = document.getElementById("publication-format").value;
-      setPublicationMode(mode);
-    }
-
-    function pickPresetTitle() {
-      const val = document.getElementById("title-dropdown").value;
-      if (val !== "custom") {
-        document.getElementById("input-title").value = val;
-        syncEdits();
-      }
-    }
-
-    function syncEdits() {
-      studioState.title = document.getElementById("input-title").value;
-      studioState.authors = document.getElementById("input-authors").value;
-      studioState.affil = document.getElementById("input-affil").value;
-      studioState.abstract = document.getElementById("input-abstract").value;
-      studioState.keywords = document.getElementById("input-keywords").value;
-      renderActivePaper();
-      persistState();
-    }
-
-    // =========================================================================
-    // GRAPH STUDIO LOGIC
-    // =========================================================================
-    function loadGraphDataToInputs() {
-      const gId = document.getElementById("graph-selector").value;
-      const cfg = studioState.charts[gId];
-      if (!cfg) return;
-
-      document.getElementById("graph-title-field").value = cfg.title;
-      document.getElementById("graph-type-field").value = cfg.type;
-      document.getElementById("graph-labels-field").value = cfg.labels.join(", ");
-      document.getElementById("graph-ds-label").value = cfg.label;
-      document.getElementById("graph-ds-values").value = cfg.data.join(", ");
-    }
-
-    function applyCustomChartUpdates() {
-      const gId = document.getElementById("graph-selector").value;
-      const title = document.getElementById("graph-title-field").value;
-      const type = document.getElementById("graph-type-field").value;
-      const labels = document.getElementById("graph-labels-field").value.split(",").map(s => s.trim());
-      const label = document.getElementById("graph-ds-label").value;
-      const data = document.getElementById("graph-ds-values").value.split(",").map(Number);
-
-      studioState.charts[gId] = { title, type, labels, label, data };
-      renderActivePaper();
-      persistState();
-      alert(`Chart "${title}" updated successfully!`);
-    }
-
-    // =========================================================================
-    // IMAGE UPLOAD LOGIC
-    // =========================================================================
-    function processImageUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const slot = document.getElementById("upload-slot-select").value;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const base64 = e.target.result;
-        if (slot === "slot-schematic") studioState.uploadedImages.schematic = base64;
-        else if (slot === "slot-chassis") studioState.uploadedImages.chassis = base64;
-        else studioState.uploadedImages.arena = base64;
-
-        document.getElementById("image-preview-thumbnail").innerHTML = `
-          <img src="${base64}" style="max-width:100%; max-height:120px; border-radius:4px; margin-top:8px; border:1px solid var(--panel-border);" /><br/>
-          <span style="font-size:11px; color:var(--ok);">Image embedded and saved locally!</span>
-        `;
-        renderActivePaper();
-        persistState();
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function copyFluxPrompt() {
-      const text = document.getElementById("flux-prompt-preview").innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        alert("FLUX.ai Master Design Prompt copied to clipboard!");
-      });
-    }
-
-    // =========================================================================
-    // STORAGE MANAGEMENT
-    // =========================================================================
-    function persistState() {
-      localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(studioState));
-      const ind = document.getElementById("save-indicator");
-      ind.style.opacity = "1";
-      setTimeout(() => { ind.style.opacity = "0.7"; }, 1200);
-    }
-
-    function loadSavedState() {
-      const saved = localStorage.getItem(STORAGE_KEY_V2);
-      if (saved) {
-        try {
-          studioState = { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
-          document.getElementById("input-title").value = studioState.title;
-          document.getElementById("input-authors").value = studioState.authors;
-          document.getElementById("input-affil").value = studioState.affil;
-          document.getElementById("input-abstract").value = studioState.abstract;
-          document.getElementById("input-keywords").value = studioState.keywords;
-        } catch (e) {
-          console.error("Failed to parse saved state", e);
-        }
-      }
-    }
-
-    function resetStudioDefaults() {
-      if (confirm("Reset paper contents, uploaded figures, and charts to factory defaults?")) {
-        localStorage.removeItem(STORAGE_KEY_V2);
-        studioState = { ...DEFAULT_CONFIG };
-        location.reload();
-      }
-    }
-
-    function exportActiveMarkdown() {
-      if (activeMode === "conf") {
-        window.open("IEEE_PAPER_DRAFT.md", "_blank");
-      } else {
-        window.open("Q1_JOURNAL_AND_CONFERENCE_RESEARCH.md", "_blank");
-      }
-    }
-
-    // =========================================================================
-    // DYNAMIC PAPER SHEET RENDERING
-    // =========================================================================
-    function renderActivePaper() {
-      const container = document.getElementById("paper-stack");
-      container.innerHTML = "";
-
-      if (activeMode === "conf") {
-        renderConferenceSheets(container);
-      } else {
-        renderJournalSheets(container);
-      }
-
-      // Re-trigger MathJax rendering
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise();
-      }
-
-      // Initialize all generated charts
-      initRenderedCharts();
-    }
-
-    // --- CONFERENCE PAPER GENERATOR (3-4 PAGES) ---
-    function renderConferenceSheets(container) {
-      // PAGE 1
-      container.innerHTML += `
-        <article class="paper-sheet" id="conf-page-1">
+      <!-- ================================================================= -->
+      <!-- CONFERENCE PAPER CONTAINER (3-4 PAGES) -->
+      <!-- ================================================================= -->
+      <div id="conf-paper-container" class="paper-container">
+        <!-- CONF PAGE 1 -->
+        <article class="paper-sheet" id="conf-sheet-1">
           <div class="paper-header">
             <span>IEEE International Conference on Robotics and Automation (ICRA 2026)</span>
             <span>Draft Manuscript</span>
           </div>
 
           <div class="paper-title-area">
-            <h1 class="paper-main-title">${studioState.title}</h1>
-            <div class="paper-authors">${studioState.authors}</div>
-            <div class="paper-affiliations">${studioState.affil}</div>
+            <h1 class="paper-main-title live-title-target">A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration</h1>
+            <div class="paper-authors live-authors-target">Mohit Sharma, Senior Member, IEEE, and Research Collaborators</div>
+            <div class="paper-affiliations live-affil-target">Department of Robotics and Automation Engineering · Robotics Systems Laboratory</div>
           </div>
 
           <div class="paper-abstract-container">
-            <strong>Abstract</strong>—${studioState.abstract}
+            <strong>Abstract</strong>—<span class="live-abstract-target">Autonomous mobile robots navigating GPS-denied indoor spaces require deterministic motor regulation, high-bandwidth range-finding telemetry, and low-latency spatial state estimation. Conventional entry-level robotic architectures often suffer from a severe architectural bottleneck: consolidating high-baud laser serial acquisition, real-time microsecond-level quadrature encoder counting, closed-loop velocity regulation, and network communication onto a single microcontroller. This causes interrupt starvation, dropped encoder edges, serial buffer overflows, and motor-induced brownouts. This paper introduces SLAM Bot, a high-performance differential-drive mobile robotics framework featuring an edge-decoupled, heterogeneous dual-microcontroller architecture and a distributed ROS 2 Humble navigation ecosystem. Physical mobility is governed by an Arduino Uno R4 WiFi executing a 50 Hz deterministic PID velocity loop with 700 CPR quadrature encoder feedback, while sensor telemetry is offloaded to a dedicated NodeMCU ESP8266. Experimental benchmarks demonstrate sub-centimeter loop-closure residuals (0.8 cm), rotational dead-reckoning drift below 1.85° per 360° turn, and zero watchdog crashes over continuous autonomous exploration.</span>
             <div style="margin-top:8px;">
-              <strong>Keywords</strong>—${studioState.keywords}
+              <strong>Keywords</strong>—<span class="live-keywords-target">Simultaneous Localization and Mapping (SLAM), ROS 2 Humble, Frontier Exploration, Differential Drive, Dual-MCU Architecture, LiDAR Telemetry, Ceres Optimization.</span>
             </div>
           </div>
 
@@ -1085,7 +823,7 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
                 The SLAM Bot architecture physically segregates real-time actuation from optical perception into distinct computing domains:
               </p>
 
-              <div class="figure-wrapper">
+              <div class="figure-wrapper" id="conf-fig1-box">
                 <div style="font-family:'JetBrains Mono', monospace; font-size:10px; background:#f1f5f9; padding:8px; border-radius:3px; text-align:left; line-height:1.35;">
                   2S LiPo Battery (7.4V - 8.4V)<br/>
                   &nbsp;├── Raw VM Rail ──────▶ DRV8833 (Motor Driver ~1.5A stall)<br/>
@@ -1109,11 +847,9 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
             <span>Page 1 of 4</span>
           </div>
         </article>
-      `;
 
-      // PAGE 2
-      container.innerHTML += `
-        <article class="paper-sheet" id="conf-page-2">
+        <!-- CONF PAGE 2 -->
+        <article class="paper-sheet" id="conf-sheet-2">
           <div class="paper-header">
             <span>IEEE ICRA 2026 · Decoupled Dual-MCU SLAM Bot</span>
             <span>Section III–IV</span>
@@ -1145,7 +881,7 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
               <!-- CHART 2: PID STEP RESPONSE -->
               <div class="figure-wrapper">
                 <div class="chart-box">
-                  <canvas id="canvas-chart2"></canvas>
+                  <canvas id="canvas-conf-chart2"></canvas>
                 </div>
                 <div class="figure-caption">Fig. 2. 50 Hz closed-loop PID velocity step response (mm/s).</div>
               </div>
@@ -1177,7 +913,7 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
               <!-- CHART 4: MEMORY STABILITY -->
               <div class="figure-wrapper">
                 <div class="chart-box">
-                  <canvas id="canvas-chart4"></canvas>
+                  <canvas id="canvas-conf-chart4"></canvas>
                 </div>
                 <div class="figure-caption">Fig. 3. Available heap RAM stability over 60 mins (kB).</div>
               </div>
@@ -1189,11 +925,9 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
             <span>Page 2 of 4</span>
           </div>
         </article>
-      `;
 
-      // PAGE 3
-      container.innerHTML += `
-        <article class="paper-sheet" id="conf-page-3">
+        <!-- CONF PAGE 3 -->
+        <article class="paper-sheet" id="conf-sheet-3">
           <div class="paper-header">
             <span>IEEE ICRA 2026 · Decoupled Dual-MCU SLAM Bot</span>
             <span>Section V–VI</span>
@@ -1203,7 +937,7 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
             <div>
               <h2 class="paper-section-head">V. Graph SLAM & Exploration</h2>
               <p class="paper-para">
-                <code>slam_toolbox</code> maintains a sparse non-linear pose graph optimized via Google Ceres with Huber loss kernels:
+                SLAM Toolbox maintains a sparse non-linear pose graph optimized via Google Ceres with Huber loss kernels:
               </p>
               <div class="math-block">
                 $$\min_{\mathbf{x}} \sum_{(i,j) \in \mathcal{E}} \rho\left( \|\mathbf{e}_{ij}(\mathbf{x}_i, \mathbf{x}_j, \mathbf{z}_{ij})\|_{\mathbf{\Omega}_{ij}}^2 \right)$$
@@ -1220,7 +954,7 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
               <!-- CHART 3: CERES RESIDUAL MINIMIZATION -->
               <div class="figure-wrapper">
                 <div class="chart-box">
-                  <canvas id="canvas-chart3"></canvas>
+                  <canvas id="canvas-conf-chart3"></canvas>
                 </div>
                 <div class="figure-caption">Fig. 4. Ceres loop closure residual error convergence (cm).</div>
               </div>
@@ -1278,7 +1012,7 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
               <!-- CHART 1: ODOMETRY DRIFT -->
               <div class="figure-wrapper">
                 <div class="chart-box">
-                  <canvas id="canvas-chart1"></canvas>
+                  <canvas id="canvas-conf-chart1"></canvas>
                 </div>
                 <div class="figure-caption">Fig. 5. Rotational odometry drift comparison (360° turn).</div>
               </div>
@@ -1290,11 +1024,9 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
             <span>Page 3 of 4</span>
           </div>
         </article>
-      `;
 
-      // PAGE 4
-      container.innerHTML += `
-        <article class="paper-sheet" id="conf-page-4">
+        <!-- CONF PAGE 4 -->
+        <article class="paper-sheet" id="conf-sheet-4">
           <div class="paper-header">
             <span>IEEE ICRA 2026 · Decoupled Dual-MCU SLAM Bot</span>
             <span>Section VII & References</span>
@@ -1305,7 +1037,7 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
               <!-- CHART 6: EXPLORATION COVERAGE -->
               <div class="figure-wrapper">
                 <div class="chart-box">
-                  <canvas id="canvas-chart6"></canvas>
+                  <canvas id="canvas-conf-chart6"></canvas>
                 </div>
                 <div class="figure-caption">Fig. 6. Autonomous frontier room coverage vs time.</div>
               </div>
@@ -1336,27 +1068,27 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
             <span>Page 4 of 4</span>
           </div>
         </article>
-      `;
-    }
+      </div>
 
-    // --- Q1 SCI JOURNAL PAPER GENERATOR (8-12 PAGES EXTENDED) ---
-    function renderJournalSheets(container) {
-      // PAGE 1: Title, Nomenclature, Abstract, Introduction
-      container.innerHTML += `
-        <article class="paper-sheet" id="jour-page-1">
+      <!-- ================================================================= -->
+      <!-- Q1 SCI JOURNAL PAPER CONTAINER (8-12 PAGES) -->
+      <!-- ================================================================= -->
+      <div id="journal-paper-container" class="paper-container" style="display:none;">
+        <!-- JOUR PAGE 1 -->
+        <article class="paper-sheet" id="jour-sheet-1">
           <div class="paper-header">
-            <span>IEEE TRANSACTIONS ON ROBOTICS / IEEE ACCESS · REGULAR PAPER</span>
+            <span>IEEE TRANSACTIONS ON ROBOTICS / IEEE ACCESS · REGULAR RESEARCH MANUSCRIPT</span>
             <span>VOL. 32, NO. 4, 2026</span>
           </div>
 
           <div class="paper-title-area">
-            <h1 class="paper-main-title">${studioState.title}</h1>
-            <div class="paper-authors">${studioState.authors}</div>
-            <div class="paper-affiliations">${studioState.affil}</div>
+            <h1 class="paper-main-title live-title-target">Edge-Decoupled Heterogeneous Multi-Microcontroller Architecture for Real-Time 2D LiDAR Graph SLAM and Autonomous Frontier Exploration in Resource-Constrained Ground Robotics</h1>
+            <div class="paper-authors live-authors-target">Mohit Sharma, Senior Member, IEEE, and Research Collaborators</div>
+            <div class="paper-affiliations live-affil-target">Department of Robotics and Automation Engineering · Robotics Systems Laboratory</div>
           </div>
 
           <div class="table-caption">NOMENCLATURE & PHYSICAL SYSTEM PARAMETERS</div>
-          <table class="table-paper" style="margin-bottom:16px;">
+          <table class="table-paper" style="margin-bottom:14px;">
             <thead>
               <tr>
                 <th>Symbol</th>
@@ -1404,9 +1136,9 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
           </table>
 
           <div class="paper-abstract-container">
-            <strong>Abstract</strong>—${studioState.abstract}
+            <strong>Abstract</strong>—<span class="live-abstract-target">Autonomous mobile robots navigating GPS-denied indoor spaces require deterministic motor regulation, high-bandwidth range-finding telemetry, and low-latency spatial state estimation. Conventional entry-level robotic architectures often suffer from a severe architectural bottleneck: consolidating high-baud laser serial acquisition, real-time microsecond-level quadrature encoder counting, closed-loop velocity regulation, and network communication onto a single microcontroller. This causes interrupt starvation, dropped encoder edges, serial buffer overflows, and motor-induced brownouts. This paper introduces SLAM Bot, a high-performance differential-drive mobile robotics framework featuring an edge-decoupled, heterogeneous dual-microcontroller architecture and a distributed ROS 2 Humble navigation ecosystem. Physical mobility is governed by an Arduino Uno R4 WiFi executing a 50 Hz deterministic PID velocity loop with 700 CPR quadrature encoder feedback, while sensor telemetry is offloaded to a dedicated NodeMCU ESP8266. Experimental benchmarks demonstrate sub-centimeter loop-closure residuals (0.8 cm), rotational dead-reckoning drift below 1.85° per 360° turn, and zero watchdog crashes over continuous autonomous exploration.</span>
             <div style="margin-top:8px;">
-              <strong>Index Terms</strong>—${studioState.keywords}
+              <strong>Index Terms</strong>—<span class="live-keywords-target">Simultaneous Localization and Mapping (SLAM), ROS 2 Humble, Frontier Exploration, Differential Drive, Dual-MCU Architecture, LiDAR Telemetry, Ceres Optimization.</span>
             </div>
           </div>
 
@@ -1422,11 +1154,9 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
             <span>Page 1 of 10</span>
           </div>
         </article>
-      `;
 
-      // PAGE 2: Literature Matrix (1997-2025)
-      container.innerHTML += `
-        <article class="paper-sheet" id="jour-page-2">
+        <!-- JOUR PAGE 2 -->
+        <article class="paper-sheet" id="jour-sheet-2">
           <div class="paper-header">
             <span>IEEE TRANSACTIONS ON ROBOTICS · SECTION 2</span>
             <span>LITERATURE GAP MATRIX</span>
@@ -1463,8 +1193,8 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
                 <td>Thrun et al. [3]</td>
                 <td>Probabilistic</td>
                 <td>Bayesian EKF & Rao-Blackwellized particle filters</td>
-                <td>Particle depletion in large loops; $\mathcal{O}(M \cdot K)$ memory complexity</td>
-                <td>Replaced particle filters with sparse pose-graph optimization (`slam_toolbox`)</td>
+                <td>Particle depletion in large loops; O(M*K) memory complexity</td>
+                <td>Replaced particle filters with sparse pose-graph optimization (SLAM Toolbox)</td>
               </tr>
               <tr>
                 <td><strong>2007</strong></td>
@@ -1495,8 +1225,8 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
                 <td>TurtleBot 3 [8]</td>
                 <td>Reference Bot</td>
                 <td>OpenCR (Cortex-M7) + Raspberry Pi 3/4</td>
-                <td>High BOM cost ($> \$650$); battery drain from onboard SBC</td>
-                <td>Sub-\$150 BOM utilizing decoupled sub-\$5 microcontrollers (Uno R4 + ESP8266)</td>
+                <td>High BOM cost (> $650); battery drain from onboard SBC</td>
+                <td>Sub-$150 BOM utilizing decoupled sub-$5 microcontrollers (Uno R4 + ESP8266)</td>
               </tr>
               <tr>
                 <td><strong>2021</strong></td>
@@ -1511,8 +1241,8 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
                 <td>Chen et al. [10]</td>
                 <td>IoT Robotics</td>
                 <td>ESP32 mobile mapping over MQTT/HTTP</td>
-                <td>High latency ($> 80\text{ ms}$); heap fragmentation; motor brownouts</td>
-                <td>Dual-rail electrical isolation, zero-allocation serialization, $< 5\text{ ms}$ latency</td>
+                <td>High latency (> 80 ms); heap fragmentation; motor brownouts</td>
+                <td>Dual-rail electrical isolation, zero-allocation serialization, &lt; 5 ms latency</td>
               </tr>
               <tr>
                 <td><strong>2025</strong></td>
@@ -1530,11 +1260,9 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
             <span>Page 2 of 10</span>
           </div>
         </article>
-      `;
 
-      // PAGE 3: Hardware Architecture & Schematics
-      container.innerHTML += `
-        <article class="paper-sheet" id="jour-page-3">
+        <!-- JOUR PAGE 3 -->
+        <article class="paper-sheet" id="jour-sheet-3">
           <div class="paper-header">
             <span>IEEE TRANSACTIONS ON ROBOTICS · SECTION 3</span>
             <span>HARDWARE & ELECTRICAL CO-DESIGN</span>
@@ -1543,14 +1271,13 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
           <h2 class="paper-section-head">3. Hardware-Software Co-Design & Electrical Topology</h2>
           
           <div class="figure-wrapper">
-            <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; background:#f1f5f9; padding:12px; border-radius:4px; text-align:left; line-height:1.4;">
+            <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; background:#f1f5f9; padding:10px; border-radius:4px; text-align:left; line-height:1.35;">
               ========================================================================================<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELECTRICAL POWER & TELEMETRY TREE<br/>
               ========================================================================================<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;┌────────────────────────┐<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ 2S LiPo Battery (7.4V) │<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└───────────┬────────────┘<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;┌────────────────────┴────────────────────┐<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼ (Raw Unregulated Rail)                  ▼ (Regulated Logic Rail)<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;┌───────────────────┐                     ┌───────────────────┐<br/>
@@ -1558,7 +1285,6 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│   (Motor Power)   │                     │  (Tuned to 5.00V) │<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─────────┬─────────┘                     └─────────┬─────────┘<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│                                                 │ [470µF Buffer Cap]<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│                                                 │<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│                     ┌───────────────────────────┼───────────────────────────┐<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼                     ▼                           ▼                           ▼<br/>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;┌───────────────────┐ ┌───────────────┐           ┌───────────────┐           ┌───────────────┐<br/>
@@ -1588,11 +1314,9 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
             <span>Page 3 of 10</span>
           </div>
         </article>
-      `;
 
-      // PAGE 4: Kinematics, Runge-Kutta & PID
-      container.innerHTML += `
-        <article class="paper-sheet" id="jour-page-4">
+        <!-- JOUR PAGE 4 -->
+        <article class="paper-sheet" id="jour-sheet-4">
           <div class="paper-header">
             <span>IEEE TRANSACTIONS ON ROBOTICS · SECTION 4</span>
             <span>KINEMATICS & DISCRETE PID</span>
@@ -1626,7 +1350,7 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
           <!-- CHART 2: PID STEP RESPONSE -->
           <div class="figure-wrapper">
             <div class="chart-box-tall">
-              <canvas id="canvas-chart2"></canvas>
+              <canvas id="canvas-jour-chart2"></canvas>
             </div>
             <div class="figure-caption">Fig. 8. Experimental 50 Hz PID step response showing smooth convergence to 200 mm/s setpoint.</div>
           </div>
@@ -1636,11 +1360,9 @@ Design a production-grade, 2-layer (or 4-layer) integrated robotics carrier PCB 
             <span>Page 4 of 10</span>
           </div>
         </article>
-      `;
 
-      // PAGE 5: Zero-Allocation Serialization & Latency Estimation
-      container.innerHTML += `
-        <article class="paper-sheet" id="jour-page-5">
+        <!-- JOUR PAGE 5 -->
+        <article class="paper-sheet" id="jour-sheet-5">
           <div class="paper-header">
             <span>IEEE TRANSACTIONS ON ROBOTICS · SECTION 5</span>
             <span>SENSOR TELEMETRY & CLOCK SYNCHRONIZATION</span>
@@ -1666,7 +1388,7 @@ webSocket.broadcastTXT(jsonBuffer, ptr - jsonBuffer);
 
           <h3 class="paper-subsection-head">5.2 Adaptive Running-Minimum Clock Filter</h3>
           <p class="paper-para">
-            To bridge boot-relative microcontroller `millis()` with ROS 2 Unix timestamps without running heavy NTP daemons, the edge gateway executes a running-minimum filter over sliding window $W=50$:
+            To bridge boot-relative microcontroller millis() with ROS 2 Unix timestamps without running heavy NTP daemons, the edge gateway executes a running-minimum filter over sliding window $W=50$:
           </p>
           <div class="math-block">
             $$\delta_j = T_{\text{host}, j} - t_{\text{mcu}, j}$$
@@ -1677,7 +1399,7 @@ webSocket.broadcastTXT(jsonBuffer, ptr - jsonBuffer);
           <!-- CHART 5: LATENCY HISTOGRAM -->
           <div class="figure-wrapper">
             <div class="chart-box-tall">
-              <canvas id="canvas-chart5"></canvas>
+              <canvas id="canvas-jour-chart5"></canvas>
             </div>
             <div class="figure-caption">Fig. 9. Wireless telemetry packet latency distribution (mean 4.2 ms over local 802.11 b/g/n).</div>
           </div>
@@ -1687,21 +1409,19 @@ webSocket.broadcastTXT(jsonBuffer, ptr - jsonBuffer);
             <span>Page 5 of 10</span>
           </div>
         </article>
-      `;
 
-      // PAGE 6: Ceres Pose-Graph SLAM & BFS Exploration
-      container.innerHTML += `
-        <article class="paper-sheet" id="jour-page-6">
+        <!-- JOUR PAGE 6 -->
+        <article class="paper-sheet" id="jour-sheet-6">
           <div class="paper-header">
             <span>IEEE TRANSACTIONS ON ROBOTICS · SECTION 6</span>
             <span>GRAPH SLAM & FRONTIER EXPLORATION</span>
           </div>
 
-          <h2 class="paper-section-head">6. ROS 2 Pose-Graph SLAM & Autonomous Frontier Exploration</h2>
+          <h2 class="paper-section-head">6. ROS 2 Graph SLAM & Autonomous BFS Frontier Exploration</h2>
 
           <h3 class="paper-subsection-head">6.1 Pose-Graph Optimization via Ceres Solver</h3>
           <p class="paper-para">
-            <code>slam_toolbox</code> maintains a sparse pose graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ where vertices $\mathbf{x}_i \in SE(2)$ represent historical robot poses and edges $\mathbf{z}_{ij}$ represent spatial constraints. Non-linear least-squares optimization minimizes the robust Huber residual:
+            SLAM Toolbox maintains a sparse pose graph where vertices $\mathbf{x}_i \in SE(2)$ represent historical robot poses and edges $\mathbf{z}_{ij}$ represent spatial constraints. Non-linear least-squares optimization minimizes the robust Huber residual:
           </p>
           <div class="math-block">
             $$\min_{\mathbf{x}} \sum_{(i,j) \in \mathcal{E}} \rho\left( \|\mathbf{e}_{ij}(\mathbf{x}_i, \mathbf{x}_j, \mathbf{z}_{ij})\|_{\mathbf{\Omega}_{ij}}^2 \right)$$
@@ -1741,7 +1461,7 @@ Output: Optimal Exploration Goal Coordinate c*
           <!-- CHART 3: CERES LOOP CLOSURE RESIDUAL -->
           <div class="figure-wrapper">
             <div class="chart-box">
-              <canvas id="canvas-chart3"></canvas>
+              <canvas id="canvas-jour-chart3"></canvas>
             </div>
             <div class="figure-caption">Fig. 10. Ceres non-linear least-squares residual minimization during loop closure (cm).</div>
           </div>
@@ -1751,11 +1471,9 @@ Output: Optimal Exploration Goal Coordinate c*
             <span>Page 6 of 10</span>
           </div>
         </article>
-      `;
 
-      // PAGE 7: AI/ML Architectures
-      container.innerHTML += `
-        <article class="paper-sheet" id="jour-page-7">
+        <!-- JOUR PAGE 7 -->
+        <article class="paper-sheet" id="jour-sheet-7">
           <div class="paper-header">
             <span>IEEE TRANSACTIONS ON ROBOTICS · SECTION 7</span>
             <span>PROSPECTIVE AI/ML INTEGRATION</span>
@@ -1788,7 +1506,7 @@ Output: Optimal Exploration Goal Coordinate c*
           </p>
 
           <div class="figure-wrapper">
-            <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; background:#f8fafc; padding:12px; border-radius:4px; text-align:left; line-height:1.4;">
+            <div style="font-family:'JetBrains Mono', monospace; font-size:10px; background:#f8fafc; padding:10px; border-radius:4px; text-align:left; line-height:1.35;">
               +-----------------------------------------------------------------------------------+<br/>
               |                             AI/ML TENSOR PIPELINES                                |<br/>
               +-----------------------------------------------------------------------------------+<br/>
@@ -1804,11 +1522,9 @@ Output: Optimal Exploration Goal Coordinate c*
             <span>Page 7 of 10</span>
           </div>
         </article>
-      `;
 
-      // PAGE 8: Benchmarks & Comparative Ablation
-      container.innerHTML += `
-        <article class="paper-sheet" id="jour-page-8">
+        <!-- JOUR PAGE 8 -->
+        <article class="paper-sheet" id="jour-sheet-8">
           <div class="paper-header">
             <span>IEEE TRANSACTIONS ON ROBOTICS · SECTION 8</span>
             <span>BENCHMARK RESULTS & ABLATION STUDIES</span>
@@ -1886,7 +1602,7 @@ Output: Optimal Exploration Goal Coordinate c*
               <!-- CHART 1: DRIFT -->
               <div class="figure-wrapper">
                 <div class="chart-box">
-                  <canvas id="canvas-chart1"></canvas>
+                  <canvas id="canvas-jour-chart1"></canvas>
                 </div>
                 <div class="figure-caption">Fig. 12. Rotational odometry drift comparison.</div>
               </div>
@@ -1896,7 +1612,7 @@ Output: Optimal Exploration Goal Coordinate c*
               <!-- CHART 6: COVERAGE -->
               <div class="figure-wrapper">
                 <div class="chart-box">
-                  <canvas id="canvas-chart6"></canvas>
+                  <canvas id="canvas-jour-chart6"></canvas>
                 </div>
                 <div class="figure-caption">Fig. 13. Arena exploration area coverage vs time.</div>
               </div>
@@ -1908,11 +1624,9 @@ Output: Optimal Exploration Goal Coordinate c*
             <span>Page 8 of 10</span>
           </div>
         </article>
-      `;
 
-      // PAGE 9: Discussion & Conclusion
-      container.innerHTML += `
-        <article class="paper-sheet" id="jour-page-9">
+        <!-- JOUR PAGE 9 -->
+        <article class="paper-sheet" id="jour-sheet-9">
           <div class="paper-header">
             <span>IEEE TRANSACTIONS ON ROBOTICS · SECTION 9–10</span>
             <span>DISCUSSION & CONCLUSION</span>
@@ -1934,7 +1648,7 @@ Output: Optimal Exploration Goal Coordinate c*
 
           <h2 class="paper-section-head">10. Conclusion & Future Roadmap</h2>
           <p class="paper-para">
-            This paper presented <strong>SLAM Bot</strong>, an edge-decoupled differential-drive mobile robotics framework featuring a heterogeneous dual-microcontroller architecture and a distributed ROS 2 Humble navigation ecosystem. By isolating motor actuation and odometry dead-reckoning onto an Arduino Uno R4 WiFi, and offloading optical range telemetry to a dedicated NodeMCU ESP8266, the system completely resolves interrupt starvation, buffer overflows, and memory fragmentation. Experimental benchmarks demonstrate sub-centimeter loop-closure residuals ($0.8\text{ cm}$), rotational drift under $1.85^\circ$, and continuous autonomous frontier mapping. Future work will deploy the proposed PPO exploration policy and neural residual odometry compensator onto an onboard AI accelerator.
+            This paper presented <strong>SLAM Bot</strong>, an edge-decoupled differential-drive mobile robotics framework featuring a heterogeneous dual-microcontroller architecture and a distributed ROS 2 Humble navigation stack. By isolating motor actuation and odometry dead-reckoning onto an Arduino Uno R4 WiFi, and offloading optical range telemetry to a dedicated NodeMCU ESP8266, the system completely resolves interrupt starvation, buffer overflows, and memory fragmentation. Experimental benchmarks demonstrate sub-centimeter loop-closure residuals ($0.8\text{ cm}$), rotational drift under $1.85^\circ$, and continuous autonomous frontier mapping. Future extensions will deploy the proposed PPO exploration policy and neural residual odometry compensator onto an onboard AI accelerator.
           </p>
 
           <div class="paper-footer">
@@ -1942,18 +1656,16 @@ Output: Optimal Exploration Goal Coordinate c*
             <span>Page 9 of 10</span>
           </div>
         </article>
-      `;
 
-      // PAGE 10: References (30+ SCI citations)
-      container.innerHTML += `
-        <article class="paper-sheet" id="jour-page-10">
+        <!-- JOUR PAGE 10 -->
+        <article class="paper-sheet" id="jour-sheet-10">
           <div class="paper-header">
             <span>IEEE TRANSACTIONS ON ROBOTICS · BIBLIOGRAPHY</span>
             <span>REFERENCES</span>
           </div>
 
           <h2 class="paper-section-head">References</h2>
-          <div class="two-column-layout" style="font-size:10px;">
+          <div class="two-column-layout" style="font-size:9.5px;">
             <div>
               <div class="ref-item">[1] B. Yamauchi, "A frontier-based approach for autonomous exploration," in <em>Proc. IEEE CIRA</em>, Monterey, CA, 1997, pp. 146–151.</div>
               <div class="ref-item">[2] K. Konolige et al., "Centibots: Large-scale robot teams," <em>IEEE Trans. Robot. Autom.</em>, vol. 20, no. 5, pp. 820–830, 2004.</div>
@@ -1967,10 +1679,10 @@ Output: Optimal Exploration Goal Coordinate c*
               <div class="ref-item">[10] C. Chen et al., "Edge-assisted IoT robotics for indoor mapping," <em>IEEE Sensors J.</em>, vol. 23, no. 8, pp. 8412–8421, 2023.</div>
               <div class="ref-item">[11] M. Quigley et al., "ROS: an open-source Robot Operating System," in <em>ICRA Workshop Open Source Softw.</em>, 2009.</div>
               <div class="ref-item">[12] S. Macenski et al., "The Marathon 2: A navigation system," in <em>Proc. IEEE IROS</em>, 2020.</div>
-              <div class="ref-item">[13] A. Hornung et al., "OctoMap: An efficient probabilistic 3D mapping framework," <em>Auton. Robots</em>, vol. 34, no. 3, pp. 189–206, 2013.</div>
             </div>
 
             <div>
+              <div class="ref-item">[13] A. Hornung et al., "OctoMap: An efficient probabilistic 3D mapping framework," <em>Auton. Robots</em>, vol. 34, no. 3, pp. 189–206, 2013.</div>
               <div class="ref-item">[14] R. Mur-Artal et al., "ORB-SLAM: A versatile and accurate monocular SLAM system," <em>IEEE Trans. Robot.</em>, vol. 31, no. 5, pp. 1147–1163, 2015.</div>
               <div class="ref-item">[15] J. Schulman et al., "Proximal policy optimization algorithms," <em>arXiv:1707.06347</em>, 2017.</div>
               <div class="ref-item">[16] A. Dosovitskiy et al., "An image is worth 16x16 words: Transformers for image recognition at scale," in <em>Proc. ICLR</em>, 2021.</div>
@@ -1979,7 +1691,7 @@ Output: Optimal Exploration Goal Coordinate c*
               <div class="ref-item">[19] S. Agarwal and K. Mierle, "Ceres Solver: Tutorial & Reference," Google Inc., 2022.</div>
               <div class="ref-item">[20] M. Kaess et al., "iSAM2: Incremental smoothing and mapping," <em>Int. J. Robot. Res.</em>, vol. 31, no. 2, pp. 216–235, 2012.</div>
               <div class="ref-item">[21] D. Fox, W. Burgard, and S. Thrun, "The dynamic window approach to collision avoidance," <em>IEEE Robot. Autom. Mag.</em>, vol. 4, no. 1, pp. 23–33, 1997.</div>
-              <div class="ref-item">[22] P. E. Hart, N. J. Nilsson, and B. Raphael, "A formal basis for the heuristic determination of minimum cost paths," <em>IEEE Trans. Syst. Sci. Cybern.</em>, vol. 4, no. 2, pp. 100–107, 1968.</div>
+              <div class="ref-item">[22] P. E. Hart, N. J. Nilsson, and B. Raphael, "A formal basis for heuristic minimum cost paths," <em>IEEE Trans. Syst. Sci. Cybern.</em>, vol. 4, no. 2, pp. 100–107, 1968.</div>
               <div class="ref-item">[23] F. Dellaert and M. Kaess, "Square Root SAM," <em>Int. J. Robot. Res.</em>, vol. 25, no. 12, pp. 1181–1203, 2006.</div>
             </div>
           </div>
@@ -1989,56 +1701,307 @@ Output: Optimal Exploration Goal Coordinate c*
             <span>Page 10 of 10</span>
           </div>
         </article>
-      `;
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // =========================================================================
+    // STATE & DATA
+    // =========================================================================
+    const STORAGE_KEY_V2 = "SLAMBOT_PAPER_STUDIO_STATE_V2";
+    let activeMode = "conf"; // "conf" or "journal"
+    let chartInstances = {};
+
+    const DEFAULT_CONFIG = {
+      title: "A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration",
+      authors: "Mohit Sharma, Senior Member, IEEE, and Research Collaborators",
+      affil: "Department of Robotics and Automation Engineering · Robotics Systems Laboratory",
+      abstract: "Autonomous mobile robots navigating GPS-denied indoor spaces require deterministic motor regulation, high-bandwidth range-finding telemetry, and low-latency spatial state estimation. Conventional entry-level robotic architectures often suffer from a severe architectural bottleneck: consolidating high-baud laser serial acquisition, real-time microsecond-level quadrature encoder counting, closed-loop velocity regulation, and network communication onto a single microcontroller. This causes interrupt starvation, dropped encoder edges, serial buffer overflows, and motor-induced brownouts. This paper introduces SLAM Bot, a high-performance differential-drive mobile robotics framework featuring an edge-decoupled, heterogeneous dual-microcontroller architecture and a distributed ROS 2 Humble navigation ecosystem. Physical mobility is governed by an Arduino Uno R4 WiFi executing a 50 Hz deterministic PID velocity loop with 700 CPR quadrature encoder feedback, while sensor telemetry is offloaded to a dedicated NodeMCU ESP8266. Experimental benchmarks demonstrate sub-centimeter loop-closure residuals (0.8 cm), rotational dead-reckoning drift below 1.85° per 360° turn, and zero watchdog crashes over continuous autonomous exploration.",
+      keywords: "Simultaneous Localization and Mapping (SLAM), ROS 2 Humble, Frontier Exploration, Differential Drive, Dual-MCU Architecture, LiDAR Telemetry, Ceres Optimization.",
+      charts: {
+        chart1: {
+          title: "Rotational Odometry Drift per 360° Turn",
+          type: "bar",
+          labels: ["Single-MCU Baseline", "Uncalibrated Setup", "SLAM Bot (Decoupled)"],
+          label: "Rotational Drift (°)",
+          data: [8.45, 14.20, 1.85]
+        },
+        chart2: {
+          title: "50 Hz Closed-Loop PID Velocity Step Response",
+          type: "line",
+          labels: ["0ms", "20ms", "40ms", "60ms", "80ms", "100ms", "120ms", "140ms", "160ms"],
+          label: "Velocity (mm/s)",
+          data: [0, 45, 110, 185, 202, 200, 200, 200, 200]
+        },
+        chart3: {
+          title: "Ceres SLAM Loop Closure Residual Minimization",
+          type: "line",
+          labels: ["Iter 1", "Iter 2", "Iter 3", "Iter 4", "Iter 5", "Iter 6"],
+          label: "Residual Error (cm)",
+          data: [7.8, 4.3, 2.1, 1.2, 0.9, 0.8]
+        },
+        chart4: {
+          title: "Dynamic Heap RAM vs Static Allocation over 60 mins",
+          type: "line",
+          labels: ["0m", "10m", "20m", "30m", "40m", "50m", "60m"],
+          label: "Free Heap RAM (kB)",
+          data: [38.4, 38.4, 38.4, 38.4, 38.4, 38.4, 38.4]
+        },
+        chart5: {
+          title: "Microcontroller Telemetry Latency Distribution",
+          type: "bar",
+          labels: ["2-3ms", "3-4ms", "4-5ms", "5-6ms", "6-8ms", ">8ms"],
+          label: "Packet Count (%)",
+          data: [12.4, 68.2, 14.5, 3.8, 0.9, 0.2]
+        },
+        chart6: {
+          title: "Autonomous Frontier Coverage vs Time",
+          type: "line",
+          labels: ["0s", "45s", "90s", "135s", "180s", "222s"],
+          label: "Explored Area (m²)",
+          data: [0.0, 5.8, 14.2, 21.0, 25.4, 27.0]
+        }
+      }
+    };
+
+    let studioState = { ...DEFAULT_CONFIG };
+
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
+    window.addEventListener("DOMContentLoaded", () => {
+      loadSavedState();
+      applyTextToDOM();
+      setPublicationMode(activeMode);
+      initAllCharts();
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise();
+      }
+    });
+
+    function selectNavTab(tabId) {
+      document.querySelectorAll(".nav-tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+      event.target.classList.add("active");
+      document.getElementById(tabId).classList.add("active");
+    }
+
+    function setPublicationMode(mode) {
+      activeMode = mode;
+      document.getElementById("btn-mode-conf").classList.toggle("active", mode === "conf");
+      document.getElementById("btn-mode-journal").classList.toggle("active", mode === "journal");
+      document.getElementById("publication-format").value = mode;
+
+      const confBox = document.getElementById("conf-paper-container");
+      const jourBox = document.getElementById("journal-paper-container");
+      const label = document.getElementById("current-mode-label");
+
+      if (mode === "conf") {
+        confBox.style.display = "flex";
+        jourBox.style.display = "none";
+        label.innerText = "IEEE Conference Paper (3–4 Pages · 2-Column Standard)";
+      } else {
+        confBox.style.display = "none";
+        jourBox.style.display = "flex";
+        label.innerText = "Q1 SCI Journal Paper (8–12 Pages · Extended Manuscript)";
+      }
+
+      // Re-trigger MathJax typesetting
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise();
+      }
+      persistState();
+    }
+
+    function changeFormatFromSelect() {
+      const mode = document.getElementById("publication-format").value;
+      setPublicationMode(mode);
+    }
+
+    function pickPresetTitle() {
+      const val = document.getElementById("title-dropdown").value;
+      if (val !== "custom") {
+        document.getElementById("input-title").value = val;
+        syncEdits();
+      }
+    }
+
+    function syncEdits() {
+      studioState.title = document.getElementById("input-title").value;
+      studioState.authors = document.getElementById("input-authors").value;
+      studioState.affil = document.getElementById("input-affil").value;
+      studioState.abstract = document.getElementById("input-abstract").value;
+      studioState.keywords = document.getElementById("input-keywords").value;
+
+      applyTextToDOM();
+      persistState();
+    }
+
+    function applyTextToDOM() {
+      document.querySelectorAll(".live-title-target").forEach(el => el.innerText = studioState.title);
+      document.querySelectorAll(".live-authors-target").forEach(el => el.innerText = studioState.authors);
+      document.querySelectorAll(".live-affil-target").forEach(el => el.innerText = studioState.affil);
+      document.querySelectorAll(".live-abstract-target").forEach(el => el.innerText = studioState.abstract);
+      document.querySelectorAll(".live-keywords-target").forEach(el => el.innerText = studioState.keywords);
     }
 
     // =========================================================================
-    // CHART RENDERING ENGINE
+    // GRAPH LOGIC
     // =========================================================================
-    function initRenderedCharts() {
-      // Destroy any existing chart instances to avoid memory leaks
-      Object.keys(chartInstances).forEach(key => {
-        if (chartInstances[key]) chartInstances[key].destroy();
+    function loadGraphDataToInputs() {
+      const gId = document.getElementById("graph-selector").value;
+      const cfg = studioState.charts[gId];
+      if (!cfg) return;
+
+      document.getElementById("graph-title-field").value = cfg.title;
+      document.getElementById("graph-type-field").value = cfg.type;
+      document.getElementById("graph-labels-field").value = cfg.labels.join(", ");
+      document.getElementById("graph-ds-label").value = cfg.label;
+      document.getElementById("graph-ds-values").value = cfg.data.join(", ");
+    }
+
+    function applyCustomChartUpdates() {
+      const gId = document.getElementById("graph-selector").value;
+      const title = document.getElementById("graph-title-field").value;
+      const type = document.getElementById("graph-type-field").value;
+      const labels = document.getElementById("graph-labels-field").value.split(",").map(s => s.trim());
+      const label = document.getElementById("graph-ds-label").value;
+      const data = document.getElementById("graph-ds-values").value.split(",").map(Number);
+
+      studioState.charts[gId] = { title, type, labels, label, data };
+      initAllCharts();
+      persistState();
+      alert("Chart updated successfully!");
+    }
+
+    function initAllCharts() {
+      // Destroy existing instances
+      Object.keys(chartInstances).forEach(k => {
+        if (chartInstances[k]) chartInstances[k].destroy();
       });
       chartInstances = {};
 
-      const chartIds = ["chart1", "chart2", "chart3", "chart4", "chart5", "chart6"];
-      chartIds.forEach(cId => {
-        const canvas = document.getElementById(`canvas-${cId}`);
-        if (!canvas) return;
+      const chartConfigs = [
+        { key: "chart1", confId: "canvas-conf-chart1", jourId: "canvas-jour-chart1" },
+        { key: "chart2", confId: "canvas-conf-chart2", jourId: "canvas-jour-chart2" },
+        { key: "chart3", confId: "canvas-conf-chart3", jourId: "canvas-jour-chart3" },
+        { key: "chart4", confId: "canvas-conf-chart4", jourId: null },
+        { key: "chart5", confId: null, jourId: "canvas-jour-chart5" },
+        { key: "chart6", confId: "canvas-conf-chart6", jourId: "canvas-jour-chart6" }
+      ];
 
-        const cfg = studioState.charts[cId];
-        const ctx = canvas.getContext("2d");
+      chartConfigs.forEach(item => {
+        const cfg = studioState.charts[item.key];
+        if (!cfg) return;
 
-        chartInstances[cId] = new Chart(ctx, {
-          type: cfg.type,
-          data: {
-            labels: cfg.labels,
-            datasets: [{
-              label: cfg.label,
-              data: cfg.data,
-              backgroundColor: cfg.type === "bar" 
-                ? ["rgba(255, 23, 68, 0.7)", "rgba(255, 214, 0, 0.7)", "rgba(0, 230, 118, 0.8)", "rgba(0, 229, 255, 0.7)", "rgba(171, 71, 188, 0.7)", "rgba(255, 112, 67, 0.7)"]
-                : "rgba(0, 145, 234, 0.15)",
-              borderColor: cfg.type === "bar" ? ["#ff1744", "#ffd600", "#00e676", "#00e5ff", "#ab47bc", "#ff7043"] : "#0091ea",
-              borderWidth: 1.8,
-              fill: cfg.type === "line",
-              tension: 0.25
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false }
+        [item.confId, item.jourId].forEach(canvasId => {
+          if (!canvasId) return;
+          const canvas = document.getElementById(canvasId);
+          if (!canvas) return;
+
+          const ctx = canvas.getContext("2d");
+          chartInstances[canvasId] = new Chart(ctx, {
+            type: cfg.type,
+            data: {
+              labels: cfg.labels,
+              datasets: [{
+                label: cfg.label,
+                data: cfg.data,
+                backgroundColor: cfg.type === "bar" 
+                  ? ["rgba(255, 23, 68, 0.7)", "rgba(255, 214, 0, 0.7)", "rgba(0, 230, 118, 0.8)", "rgba(0, 229, 255, 0.7)", "rgba(171, 71, 188, 0.7)", "rgba(255, 112, 67, 0.7)"]
+                  : "rgba(0, 145, 234, 0.15)",
+                borderColor: cfg.type === "bar" ? ["#ff1744", "#ffd600", "#00e676", "#00e5ff", "#ab47bc", "#ff7043"] : "#0091ea",
+                borderWidth: 1.8,
+                fill: cfg.type === "line",
+                tension: 0.25
+              }]
             },
-            scales: {
-              y: { beginAtZero: true, grid: { color: "#e2e8f0" } },
-              x: { grid: { display: false } }
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true, grid: { color: "#e2e8f0" } },
+                x: { grid: { display: false } }
+              }
             }
-          }
+          });
         });
       });
+    }
+
+    // =========================================================================
+    // IMAGE UPLOAD
+    // =========================================================================
+    function processImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const slot = document.getElementById("upload-slot-select").value;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64 = e.target.result;
+        const caption = document.getElementById("upload-caption-field").value;
+
+        if (slot === "slot-schematic") {
+          const box = document.getElementById("conf-fig1-box");
+          if (box) {
+            box.innerHTML = `<img src="${base64}" style="max-width:100%; border-radius:3px;" /><div class="figure-caption">${caption}</div>`;
+          }
+        }
+        document.getElementById("image-preview-thumbnail").innerHTML = `
+          <img src="${base64}" style="max-width:100%; max-height:120px; border-radius:4px; margin-top:8px; border:1px solid var(--panel-border);" /><br/>
+          <span style="font-size:11px; color:var(--ok);">Image embedded and saved locally!</span>
+        `;
+        persistState();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // =========================================================================
+    // PERSISTENCE
+    // =========================================================================
+    function persistState() {
+      localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(studioState));
+      const ind = document.getElementById("save-indicator");
+      if (ind) {
+        ind.style.opacity = "1";
+        setTimeout(() => { ind.style.opacity = "0.7"; }, 1200);
+      }
+    }
+
+    function loadSavedState() {
+      const saved = localStorage.getItem(STORAGE_KEY_V2);
+      if (saved) {
+        try {
+          studioState = { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
+          document.getElementById("input-title").value = studioState.title;
+          document.getElementById("input-authors").value = studioState.authors;
+          document.getElementById("input-affil").value = studioState.affil;
+          document.getElementById("input-abstract").value = studioState.abstract;
+          document.getElementById("input-keywords").value = studioState.keywords;
+        } catch (e) {
+          console.error("Failed to parse saved state", e);
+        }
+      }
+    }
+
+    function resetStudioDefaults() {
+      if (confirm("Reset paper contents, figures, and charts to factory defaults?")) {
+        localStorage.removeItem(STORAGE_KEY_V2);
+        studioState = { ...DEFAULT_CONFIG };
+        location.reload();
+      }
+    }
+
+    function exportActiveMarkdown() {
+      if (activeMode === "conf") {
+        window.open("IEEE_PAPER_DRAFT.md", "_blank");
+      } else {
+        window.open("Q1_JOURNAL_AND_CONFERENCE_RESEARCH.md", "_blank");
+      }
     }
   </script>
 </body>
