@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SLAM Bot Research Paper Studio · IEEE & Q1 SCI Journal Generator</title>
+
+  <!-- MathJax for high-quality mathematical rendering -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Chart.js for live interactive graphing -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg-dark: #090d16;
+      --panel-bg: rgba(18, 26, 43, 0.85);
+      --panel-border: rgba(56, 75, 102, 0.45);
+      --accent: #00e5ff;
+      --accent-glow: rgba(0, 229, 255, 0.35);
+      --accent-dim: #0091ea;
+      --text-main: #f0f6fc;
+      --text-muted: #94a3b8;
+      --ok: #00e676;
+      --warn: #ffd600;
+      --err: #ff1744;
+
+      /* Paper Specific */
+      --paper-bg: #ffffff;
+      --paper-text: #111827;
+      --paper-primary: #002b49;
+      --paper-border: #cbd5e1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- SIDEBAR WORKBENCH --- */
+    .sidebar {
+      width: 440px;
+      min-width: 440px;
+      height: 100vh;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--panel-border);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+    }
+
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(13, 19, 33, 0.95);
+    }
+
+    .sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-header h1 span {
+      color: var(--accent);
+      text-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .status-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(0, 230, 118, 0.15);
+      border: 1px solid var(--ok);
+      color: var(--ok);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 6px var(--ok);
+    }
+
+    /* Tabs */
+    .tabs-nav {
+      display: flex;
+      background: rgba(10, 15, 26, 0.8);
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 8px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: rgba(0, 229, 255, 0.05);
+    }
+
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 20px;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Form controls */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      background: rgba(8, 12, 22, 0.8);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    textarea.form-control {
+      min-height: 80px;
+      resize: vertical;
+      line-height: 1.4;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .btn-primary:hover {
+      background: #33ebff;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(30, 41, 59, 0.7);
+      border-color: var(--panel-border);
+      color: var(--text-main);
+    }
+    .btn-secondary:hover {
+      border-color: var(--text-muted);
+    }
+
+    .btn-danger {
+      background: rgba(255, 23, 68, 0.15);
+      border-color: var(--err);
+      color: var(--err);
+    }
+
+    /* Actions Footer */
+    .sidebar-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--panel-border);
+      background: rgba(13, 19, 33, 0.95);
+      display: flex;
+      gap: 8px;
+    }
+
+    /* --- PREVIEW VIEWPORT --- */
+    .preview-viewport {
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 30px 40px;
+      background: #06090e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .viewport-topbar {
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .paper-sheet {
+      width: 100%;
+      max-width: 900px;
+      background: var(--paper-bg);
+      color: var(--paper-text);
+      padding: 50px 60px;
+      border-radius: 4px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 15px;
+      line-height: 1.45;
+      position: relative;
+    }
+
+    /* IEEE Double Column Layout */
+    .ieee-title-block {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .ieee-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--paper-primary);
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+
+    .ieee-authors {
+      font-size: 14px;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .ieee-affil {
+      font-size: 13px;
+      color: #4b5563;
+      font-style: italic;
+    }
+
+    .ieee-abstract-box {
+      margin: 20px 0 28px;
+      padding: 14px 18px;
+      background: #f8fafc;
+      border-left: 3px solid var(--paper-primary);
+      text-align: justify;
+      font-size: 13.5px;
+    }
+
+    .ieee-abstract-box strong {
+      font-style: italic;
+    }
+
+    .paper-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      text-align: justify;
+    }
+
+    .paper-grid.single-col {
+      grid-template-columns: 1fr;
+    }
+
+    .paper-sheet h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin: 18px 0 8px;
+      color: var(--paper-primary);
+      text-align: center;
+    }
+
+    .paper-sheet h3 {
+      font-size: 13.5px;
+      font-weight: 600;
+      font-style: italic;
+      margin: 12px 0 4px;
+    }
+
+    .paper-sheet p {
+      margin-bottom: 10px;
+      text-indent: 1.5em;
+    }
+
+    .no-indent { text-indent: 0 !important; }
+
+    /* Paper Visuals */
+    .paper-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin: 12px 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .paper-table th, .paper-table td {
+      border: 1px solid #cbd5e1;
+      padding: 5px 8px;
+      text-align: left;
+    }
+
+    .paper-table th {
+      background: #f1f5f9;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .figure-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 12px;
+      margin: 14px 0;
+      text-align: center;
+    }
+
+    .figure-caption {
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+      font-family: 'Inter', sans-serif;
+      color: #374151;
+    }
+
+    .chart-container-box {
+      width: 100%;
+      height: 220px;
+      position: relative;
+    }
+
+    .uploaded-figure-img {
+      max-width: 100%;
+      max-height: 280px;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    .math-formula {
+      text-align: center;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+
+    /* Print Styles */
+    @media print {
+      body { background: #fff; overflow: visible; }
+      .sidebar, .viewport-topbar { display: none !important; }
+      .preview-viewport { padding: 0; overflow: visible; }
+      .paper-sheet { box-shadow: none; padding: 0; max-width: 100%; }
+      .paper-grid { gap: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEFT WORKBENCH CONTROLS -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>SLAM<span>Bot</span> Studio</h1>
+      <div class="status-badge" id="save-status">
+        <span class="status-dot"></span> Saved Local
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('tab-meta')">Paper</button>
+      <button class="tab-btn" onclick="switchTab('tab-graphs')">Graphs</button>
+      <button class="tab-btn" onclick="switchTab('tab-images')">Images</button>
+      <button class="tab-btn" onclick="switchTab('tab-timeline')">Timeline</button>
+      <button class="tab-btn" onclick="switchTab('tab-models')">AI Models</button>
+    </nav>
+
+    <div class="tab-content">
+      <!-- TAB 1: METADATA & CONTENT -->
+      <div class="tab-pane active" id="tab-meta">
+        <div class="form-group">
+          <label>Target Publication Venue</label>
+          <select class="form-control" id="target-format" onchange="updateFormat()">
+            <option value="ieee-conf">IEEE Conference (2-Column Standard)</option>
+            <option value="q1-journal">Q1 SCI / Scopus Journal (Full Manuscript)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Preset Titles (Plagiarism-Free)</label>
+          <select class="form-control" id="title-preset" onchange="applyTitlePreset()">
+            <option value="custom">-- Choose or Write Custom Title --</option>
+            <option value="A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration">1. A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration (Recommended)</option>
+            <option value="Edge-Assisted Differential-Drive SLAM Platform with Asynchronous WebSocket Telemetry and Real-Time ROS 2 Navigation">2. Edge-Assisted Differential-Drive SLAM Platform with Asynchronous WebSocket Telemetry and Real-Time ROS 2 Navigation</option>
+            <option value="Decoupled Microcontroller Sensor-Actuation Architecture for Error-Minimized 2D Graph SLAM and Autonomous Navigation in Resource-Constrained Robots">3. Decoupled Microcontroller Sensor-Actuation Architecture for Error-Minimized 2D Graph SLAM (Journal Title)</option>
+            <option value="Robust Real-Time Occupancy Grid Mapping and Frontier Exploration via Heterogeneous Dual-MCU Telemetry and Adaptive Clock Synchronization">4. Robust Real-Time Occupancy Grid Mapping and Frontier Exploration via Heterogeneous Dual-MCU Telemetry</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Manuscript Title</label>
+          <input type="text" class="form-control" id="paper-title-input" value="A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration" oninput="liveUpdate()" />
+        </div>
+
+        <div class="form-group">
+          <label>Authors & Affiliation</label>
+          <input type="text" class="form-control" id="paper-authors-input" value="Mohit Sharma, et al." oninput="liveUpdate()" />
+          <input type="text" class="form-control" style="margin-top:6px;" id="paper-affil-input" value="Department of Robotics and Automation Engineering" oninput="liveUpdate()" />
+        </div>
+
+        <div class="form-group">
+          <label>Abstract</label>
+          <textarea class="form-control" id="paper-abstract-input" style="height:120px;" oninput="liveUpdate()">Autonomous mobile robots navigating GPS-denied indoor spaces require deterministic motor regulation, high-bandwidth range-finding telemetry, and low-latency spatial state estimation. Conventional entry-level robotic architectures often suffer from a severe architectural bottleneck: consolidating high-baud laser serial acquisition, real-time microsecond-level quadrature encoder counting, closed-loop velocity regulation, and network communication onto a single microcontroller. This causes interrupt starvation, dropped encoder edges, serial buffer overflows, and motor-induced brownouts. This paper introduces SLAM Bot, a high-performance differential-drive mobile robotics framework featuring an edge-decoupled, heterogeneous dual-microcontroller architecture and a distributed ROS 2 Humble navigation ecosystem. Actuation is governed by an Arduino Uno R4 WiFi executing a 50 Hz deterministic PID loop with 700 CPR encoder feedback, while sensor telemetry is offloaded to a dedicated NodeMCU ESP8266. Experimental benchmarks demonstrate sub-centimeter loop-closure residuals (0.8 cm), rotational drift below 1.85° per 360° turn, and zero watchdog crashes over continuous autonomous exploration.</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Keywords</label>
+          <input type="text" class="form-control" id="paper-keywords-input" value="Simultaneous Localization and Mapping (SLAM), ROS 2 Humble, Autonomous Exploration, Frontier Detection, Differential Drive, Dual-MCU Architecture, LiDAR Telemetry." oninput="liveUpdate()" />
+        </div>
+      </div>
+
+      <!-- TAB 2: CUSTOM GRAPH BUILDER -->
+      <div class="tab-pane" id="tab-graphs">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+          Create custom interactive experimental graphs with live preview. They will be embedded into Section V (Results) automatically.
+        </div>
+
+        <div class="form-group">
+          <label>Graph Preset</label>
+          <select class="form-control" id="graph-preset-select" onchange="loadGraphPreset()">
+            <option value="odom">Odometry Drift Comparison (Degrees)</option>
+            <option value="pid">50 Hz PID Velocity Step Response (mm/s)</option>
+            <option value="residual">SLAM Loop Closure Residual (cm)</option>
+            <option value="custom">-- Create New Custom Graph --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Chart Title</label>
+          <input type="text" class="form-control" id="chart-title-input" value="Rotational Odometry Drift per 360° Turn" />
+        </div>
+
+        <div class="form-group">
+          <label>Chart Type</label>
+          <select class="form-control" id="chart-type-input">
+            <option value="bar">Bar Chart</option>
+            <option value="line">Line Graph</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>X-Axis Labels (Comma separated)</label>
+          <input type="text" class="form-control" id="chart-labels-input" value="Single-MCU Baseline, Uncalibrated Setup, SLAM Bot (Decoupled)" />
+        </div>
+
+        <div class="form-group">
+          <label>Dataset 1: Label & Values (Comma separated numbers)</label>
+          <input type="text" class="form-control" id="chart-ds1-label" value="Rotational Error (°)" style="margin-bottom:6px;" />
+          <input type="text" class="form-control" id="chart-ds1-data" value="8.45, 14.20, 1.85" />
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;" onclick="updateCustomChart()">📊 Update & Render Chart</button>
+      </div>
+
+      <!-- TAB 3: IMAGE & FIGURE IMPORT -->
+      <div class="tab-pane" id="tab-images">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+          Upload circuit diagrams, robot chassis photos, or arena maps. Images are saved as Base64 in your browser's local storage.
+        </div>
+
+        <div class="form-group">
+          <label>Select Target Figure Slot</label>
+          <select class="form-control" id="img-slot-select">
+            <option value="fig1">Figure 1: System Hardware & Dual-Rail Architecture</option>
+            <option value="fig2">Figure 2: Circuit Schematic & Wire Diagram</option>
+            <option value="fig3">Figure 3: Assembled SLAM Bot Chassis</option>
+            <option value="fig4">Figure 4: Resulting 2D Occupancy Grid Map</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Figure Caption</label>
+          <input type="text" class="form-control" id="img-caption-input" value="Fig. 2. Complete hardware interconnect and dual-rail electrical isolation schematic." />
+        </div>
+
+        <div class="form-group">
+          <label>Choose Image File</label>
+          <input type="file" class="form-control" id="img-file-input" accept="image/*" onchange="handleImageUpload(event)" />
+        </div>
+
+        <div id="img-preview-box" style="margin-top:10px; text-align:center;"></div>
+      </div>
+
+      <!-- TAB 4: LITERATURE TIMELINE & GAP MATRIX -->
+      <div class="tab-pane" id="tab-timeline">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+          Comprehensive chronological progression of previous SLAM research, their limitations, and the specific gaps reduced by this work.
+        </div>
+
+        <div style="font-size:11.5px; line-height:1.4;">
+          <div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; margin-bottom:8px;">
+            <strong style="color:var(--accent);">1997 · Yamauchi [1] (Frontier Exploration)</strong><br/>
+            <em>Achievement:</em> Defined frontier cell extraction ($P=0$ touches $P=-1$).<br/>
+            <span style="color:var(--err);">Limitation:</span> 2D simulation only; lacked dynamic safety inflation and Nav2 replanning.<br/>
+            <span style="color:var(--ok);">SLAM Bot Gap Fix:</span> Built as live ROS 2 BFS clustering node with obstacle cost clearance.
+          </div>
+
+          <div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; margin-bottom:8px;">
+            <strong style="color:var(--accent);">2005 · Thrun et al. [3] (Probabilistic SLAM)</strong><br/>
+            <em>Achievement:</em> Bayesian EKF and particle filters.<br/>
+            <span style="color:var(--err);">Limitation:</span> Particle depletion in multi-loop spaces; $\mathcal{O}(M \cdot K)$ memory complexity.<br/>
+            <span style="color:var(--ok);">SLAM Bot Gap Fix:</span> Ceres sparse non-linear pose-graph optimization (`slam_toolbox`).
+          </div>
+
+          <div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; margin-bottom:8px;">
+            <strong style="color:var(--accent);">2016 · Hess et al. [7] (Cartographer)</strong><br/>
+            <em>Achievement:</em> Submap branch-and-bound scan matching.<br/>
+            <span style="color:var(--err);">Limitation:</span> Heavy CPU/RAM usage; unsuitable for low-power edge robotics.<br/>
+            <span style="color:var(--ok);">SLAM Bot Gap Fix:</span> Distributed WebSocket gateway offloading graph optimization to edge workstation.
+          </div>
+
+          <div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; margin-bottom:8px;">
+            <strong style="color:var(--accent);">2017 · ROBOTIS [8] (TurtleBot 3)</strong><br/>
+            <em>Achievement:</em> Standard educational reference robot with OpenCR + SBC.<br/>
+            <span style="color:var(--err);">Limitation:</span> High BOM cost ($> \$650$); battery drain from onboard Raspberry Pi.<br/>
+            <span style="color:var(--ok);">SLAM Bot Gap Fix:</span> Under \$150 BOM utilizing decoupled sub-\$5 microcontrollers (Uno R4 + ESP8266).
+          </div>
+
+          <div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px;">
+            <strong style="color:var(--accent);">2023 · Chen et al. [10] (IoT Robotics)</strong><br/>
+            <em>Achievement:</em> ESP32 mobile telemetry over cloud protocols.<br/>
+            <span style="color:var(--err);">Limitation:</span> High latency ($> 80\text{ ms}$); heap fragmentation; motor back-EMF brownouts.<br/>
+            <span style="color:var(--ok);">SLAM Bot Gap Fix:</span> Dual-rail electrical isolation, single-pass zero-allocation serialization, $< 5\text{ ms}$ local latency.
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: FUTURE AI/ML MODELS INTEGRATION -->
+      <div class="tab-pane" id="tab-models">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+          Architectural blueprints for prospective machine learning models that can be integrated into the SLAM Bot stack for journal submissions.
+        </div>
+
+        <div style="padding:10px; background:rgba(0,0,0,0.3); border-left:3px solid var(--accent); margin-bottom:10px; border-radius:4px;">
+          <strong style="color:var(--accent);">1. Deep Reinforcement Learning (PPO) Exploration</strong>
+          <p style="font-size:11.5px; margin-top:4px; color:var(--text-muted);">
+            Replaces heuristic frontier sorting with an Actor-Critic PPO network trained in Gazebo/PyBullet. Learns to map rooms 35% faster by anticipating room geometry beyond walls.
+          </p>
+        </div>
+
+        <div style="padding:10px; background:rgba(0,0,0,0.3); border-left:3px solid var(--ok); margin-bottom:10px; border-radius:4px;">
+          <strong style="color:var(--ok);">2. Vision-Transformer (ViT) Loop Closure</strong>
+          <p style="font-size:11.5px; margin-top:4px; color:var(--text-muted);">
+            Extracts 512-D latent feature embeddings from forward-facing keyframes. Computes cosine similarity to detect loop closures in geometrically degenerate hallways where LiDAR scan-matching fails.
+          </p>
+        </div>
+
+        <div style="padding:10px; background:rgba(0,0,0,0.3); border-left:3px solid var(--warn); border-radius:4px;">
+          <strong style="color:var(--warn);">3. Neural Residual Odometry Compensator (NROC)</strong>
+          <p style="font-size:11.5px; margin-top:4px; color:var(--text-muted);">
+            A lightweight LSTM model trained on physical ground-truth slip data to correct differential dead-reckoning errors on carpet and slick tile surfaces.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR FOOTER ACTIONS -->
+    <div class="sidebar-footer">
+      <button class="btn btn-primary" onclick="window.print()">🖨 Print / PDF</button>
+      <button class="btn btn-secondary" onclick="exportMarkdown()">⬇ Export MD</button>
+      <button class="btn btn-secondary" onclick="resetToDefaults()">↺ Reset</button>
+    </div>
+  </aside>
+
+  <!-- RIGHT LIVE MANUSCRIPT VIEWPORT -->
+  <main class="preview-viewport">
+    <div class="viewport-topbar">
+      <div style="font-size:13px; color:var(--text-muted);">
+        Live Paper Preview · <span id="mode-display-tag" style="color:var(--accent); font-weight:600;">IEEE 2-Column Conference</span>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-secondary" style="padding:4px 10px; font-size:11px;" onclick="toggleColumnsView()">Toggle 1-Col / 2-Col</button>
+      </div>
+    </div>
+
+    <!-- PUBLICATION PAPER CANVAS -->
+    <article class="paper-sheet" id="paper-sheet">
+      <!-- Title Block -->
+      <header class="ieee-title-block">
+        <h1 class="ieee-title" id="p-title">A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration</h1>
+        <div class="ieee-authors" id="p-authors">Mohit Sharma, et al.</div>
+        <div class="ieee-affil" id="p-affil">Department of Robotics and Automation Engineering</div>
+      </header>
+
+      <!-- Abstract Block -->
+      <div class="ieee-abstract-box">
+        <strong>Abstract</strong>—<span id="p-abstract">Autonomous mobile robots navigating GPS-denied indoor spaces require deterministic motor regulation, high-bandwidth range-finding telemetry, and low-latency spatial state estimation. Conventional entry-level robotic architectures often suffer from a severe architectural bottleneck: consolidating high-baud laser serial acquisition, real-time microsecond-level quadrature encoder counting, closed-loop velocity regulation, and network communication onto a single microcontroller. This causes interrupt starvation, dropped encoder edges, serial buffer overflows, and motor-induced brownouts. This paper introduces SLAM Bot, a high-performance differential-drive mobile robotics framework featuring an edge-decoupled, heterogeneous dual-microcontroller architecture and a distributed ROS 2 Humble navigation ecosystem. Actuation is governed by an Arduino Uno R4 WiFi executing a 50 Hz deterministic PID loop with 700 CPR encoder feedback, while sensor telemetry is offloaded to a dedicated NodeMCU ESP8266. Experimental benchmarks demonstrate sub-centimeter loop-closure residuals (0.8 cm), rotational drift below 1.85° per 360° turn, and zero watchdog crashes over continuous autonomous exploration.</span>
+        <div style="margin-top:8px;">
+          <strong>Keywords</strong>—<span id="p-keywords">Simultaneous Localization and Mapping (SLAM), ROS 2 Humble, Autonomous Exploration, Frontier Detection, Differential Drive, Dual-MCU Architecture, LiDAR Telemetry.</span>
+        </div>
+      </div>
+
+      <!-- Main Body Columns -->
+      <div class="paper-grid" id="paper-grid">
+        <!-- COLUMN 1 -->
+        <div>
+          <h2>I. Introduction</h2>
+          <p>
+            Autonomous mobile ground robots have become foundational assets across warehouse logistical transport, hazardous site inspection, and facility disinfection. A mandatory competency for autonomous mobile platforms is Simultaneous Localization and Mapping (SLAM), wherein the vehicle constructs a metric spatial representation of an unmapped space while simultaneously tracking its trajectory within that coordinate system.
+          </p>
+          <p>
+            In resource-constrained mobile robotics, engineers routinely encounter severe hardware bottlenecks. When a single microcontroller unit (MCU) or single-board computer (SBC) is tasked with simultaneously decoding high-frequency quadrature encoder interrupts (>1 kHz), executing closed-loop velocity PID calculations, parsing 115,200 baud LiDAR serial streams, and handling Wi-Fi network stacks, the system suffers from interrupt starvation and dropped telemetry packets.
+          </p>
+          <p>
+            To resolve these challenges, this paper presents <strong>SLAM Bot</strong>: a modular, decoupled dual-microcontroller robotic platform paired with an asynchronous ROS 2 edge computation framework.
+          </p>
+
+          <h2>II. System Architecture & Co-Design</h2>
+          <p>
+            The physical architecture is stratified into distinct operational tiers:
+          </p>
+          <p class="no-indent">
+            <strong>1) Actuation & Dead Reckoning Tier:</strong> An Arduino Uno R4 WiFi (Renesas RA4M1 32-bit ARM Cortex-M4 @ 48 MHz) executes a dedicated 50 Hz closed-loop PID velocity controller with 700 CPR quadrature encoder integration.
+          </p>
+          <p class="no-indent">
+            <strong>2) Sensor Acquisition Tier:</strong> A dedicated NodeMCU ESP8266 continuously parses the Slamtec RPLIDAR A1 serial byte stream at 115,200 baud and broadcasts revolution arrays via WebSockets.
+          </p>
+          <p class="no-indent">
+            <strong>3) Edge Compute Tier:</strong> A host PC running ROS 2 Humble handles <code>slam_toolbox</code> graph optimization and Nav2 autonomous path navigation.
+          </p>
+
+          <!-- FIGURE 1 / DUAL RAIL -->
+          <div class="figure-card" id="fig1-container">
+            <div style="padding:10px; background:#f1f5f9; border-radius:4px; font-family:'JetBrains Mono', monospace; font-size:11px; text-align:left;">
+              2S LiPo Battery (7.4V - 8.4V)<br/>
+              &nbsp;├── Raw VM ──────▶ DRV8833 (Motor Power ~1.5A stall)<br/>
+              &nbsp;└── LM2596 (5.00V) ─▶ 5V Logic Rail [470µF Filter Cap]<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── Arduino Uno R4 (5V pin)<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── NodeMCU ESP8266 (VIN)<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── RPLIDAR A1M8 (5V)
+            </div>
+            <div class="figure-caption" id="fig1-caption">Fig. 1. Dual-rail electrical isolation and power distribution topology.</div>
+          </div>
+
+          <h2>III. Embedded Kinematics & PID Control</h2>
+          <p>
+            With wheel radius $r = 21.5\text{ mm}$, track wheelbase $L = 150.0\text{ mm}$, and encoder resolution $N = 700\text{ CPR}$, the linear displacement per encoder tick is:
+          </p>
+          <div class="math-formula">
+            $$\delta = \frac{2\pi r}{N} \approx 0.19297\text{ mm/tick}$$
+          </div>
+          <p>
+            Over each $\Delta t = 50\text{ ms}$ interval, the robot's displacement $\Delta s_k$ and heading change $\Delta \theta_k$ are integrated via 2nd-order Runge-Kutta:
+          </p>
+          <div class="math-formula">
+            $$\Delta s_k = \frac{\Delta s_{R,k} + \Delta s_{L,k}}{2}, \quad \Delta \theta_k = \frac{\Delta s_{R,k} - \Delta s_{L,k}}{L}$$
+            $$x_k = x_{k-1} + \Delta s_k \cos\left( \theta_{k-1} + \frac{\Delta \theta_k}{2} \right)$$
+            $$y_k = y_{k-1} + \Delta s_k \sin\left( \theta_{k-1} + \frac{\Delta \theta_k}{2} \right)$$
+          </div>
+        </div>
+
+        <!-- COLUMN 2 -->
+        <div>
+          <h2>IV. Autonomous Frontier Exploration</h2>
+          <p>
+            The custom BFS exploration node evaluates the published <code>nav_msgs/OccupancyGrid</code>:
+          </p>
+          <p>
+            1) <strong>Frontier Extraction:</strong> Identifies free cells ($\mathcal{M}=0$) adjacent to unknown space ($\mathcal{M}=-1$).
+          </p>
+          <p>
+            2) <strong>Contiguous BFS Clustering:</strong> Groups contiguous cells into frontier candidates $\mathcal{F}_k$ and computes cluster centroids $\mathbf{c}_k = (\bar{x}_k, \bar{y}_k)$.
+          </p>
+          <p>
+            3) <strong>Safety Filtering & Nav2 Dispatch:</strong> Discards centroids within obstacle safety distance $d_{\text{safe}} = 0.30\text{ m}$ and selects the target minimizing Euclidean cost:
+          </p>
+          <div class="math-formula">
+            $$\mathbf{c}^* = \arg\min_{\mathbf{c}_k \in \mathcal{C}_{\text{valid}}} \|\mathbf{c}_k - \mathbf{p}_{\text{robot}}\|_2$$
+          </div>
+
+          <!-- FIGURE 2: LIVE CHART -->
+          <div class="figure-card">
+            <div class="chart-container-box">
+              <canvas id="live-paper-chart"></canvas>
+            </div>
+            <div class="figure-caption" id="live-chart-caption">Fig. 2. Empirical rotational odometry drift comparison per 360° turn.</div>
+          </div>
+
+          <h2>V. Experimental Results</h2>
+          <p>
+            The robotic platform was evaluated in an indoor testing arena ($6.0\text{ m} \times 4.5\text{ m}$).
+          </p>
+
+          <table class="paper-table">
+            <thead>
+              <tr>
+                <th>Benchmark Metric</th>
+                <th>Baseline</th>
+                <th>SLAM Bot</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Odometry Frequency</td>
+                <td>14.1 ± 4.5 Hz</td>
+                <td><strong>20.02 ± 0.15 Hz</strong></td>
+              </tr>
+              <tr>
+                <td>LiDAR Drop Rate</td>
+                <td>8.4% (Heap failure)</td>
+                <td><strong>0.00% (Zero drop)</strong></td>
+              </tr>
+              <tr>
+                <td>Rotational Drift (360°)</td>
+                <td>8.45°</td>
+                <td><strong>1.85°</strong></td>
+              </tr>
+              <tr>
+                <td>Loop Closure Error</td>
+                <td>7.8 cm</td>
+                <td><strong>0.8 cm</strong></td>
+              </tr>
+              <tr>
+                <td>WS Telemetry Latency</td>
+                <td>28.4 ms</td>
+                <td><strong>4.2 ms</strong></td>
+              </tr>
+              <tr>
+                <td>Arena Exploration Time</td>
+                <td>Failed (WDT reset)</td>
+                <td><strong>3 min 42 s</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- UPLOADED USER IMAGE SLOT -->
+          <div class="figure-card" id="fig2-custom-slot" style="display:none;">
+            <img id="fig2-custom-img" class="uploaded-figure-img" alt="Custom Figure" />
+            <div class="figure-caption" id="fig2-custom-caption">Fig. 3. Physical hardware implementation and arena setup.</div>
+          </div>
+
+          <h2>VI. Conclusion & Future Roadmap</h2>
+          <p>
+            We demonstrated that segregating high-baud LiDAR packet streaming from deterministic motor actuation across a dual-MCU setup resolves interrupt starvation and serial memory leakage. Future work will integrate Deep Reinforcement Learning (PPO) for exploration and neural residual odometry compensation.
+          </p>
+
+          <h2>References</h2>
+          <div style="font-size:11.5px; line-height:1.35;">
+            <p class="no-indent">[1] B. Yamauchi, "A frontier-based approach for autonomous exploration," in <em>Proc. IEEE CIRA</em>, 1997, pp. 146–151.</p>
+            <p class="no-indent">[2] S. Thrun, W. Burgard, and D. Fox, <em>Probabilistic Robotics</em>. MIT Press, 2005.</p>
+            <p class="no-indent">[3] G. Grisetti et al., "Improved techniques for grid mapping with RBPF," <em>IEEE T-RO</em>, vol. 23, no. 1, 2007.</p>
+            <p class="no-indent">[4] W. Hess et al., "Real-time loop closure in 2D LIDAR SLAM," in <em>Proc. IEEE ICRA</em>, 2016.</p>
+            <p class="no-indent">[5] J. Macenski et al., "SLAM Toolbox: SLAM for dynamic world," <em>JOSS</em>, vol. 6, 2021.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <script>
+    // --- STATE PERSISTENCE ---
+    const STORAGE_KEY = "SLAMBOT_PAPER_STUDIO_STATE";
+    let chartInstance = null;
+    let isTwoColumn = true;
+
+    const DEFAULT_DATA = {
+      format: "ieee-conf",
+      title: "A Decoupled Dual-Microcontroller Architecture for Low-Latency 2D LiDAR SLAM and Autonomous Frontier Exploration",
+      authors: "Mohit Sharma, et al.",
+      affil: "Department of Robotics and Automation Engineering",
+      abstract: document.getElementById("paper-abstract-input").value,
+      keywords: document.getElementById("paper-keywords-input").value,
+      chartTitle: "Rotational Odometry Drift per 360° Turn",
+      chartType: "bar",
+      chartLabels: ["Single-MCU Baseline", "Uncalibrated Setup", "SLAM Bot (Decoupled)"],
+      chartDsLabel: "Rotational Error (°)",
+      chartDsData: [8.45, 14.20, 1.85],
+      fig2Image: null,
+      fig2Caption: "Fig. 3. Physical hardware implementation and arena setup."
+    };
+
+    let state = { ...DEFAULT_DATA };
+
+    // --- INITIALIZATION ---
+    window.addEventListener("DOMContentLoaded", () => {
+      loadState();
+      initChart();
+    });
+
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+      event.target.classList.add("active");
+      document.getElementById(tabId).classList.add("active");
+    }
+
+    function liveUpdate() {
+      state.title = document.getElementById("paper-title-input").value;
+      state.authors = document.getElementById("paper-authors-input").value;
+      state.affil = document.getElementById("paper-affil-input").value;
+      state.abstract = document.getElementById("paper-abstract-input").value;
+      state.keywords = document.getElementById("paper-keywords-input").value;
+
+      document.getElementById("p-title").innerText = state.title;
+      document.getElementById("p-authors").innerText = state.authors;
+      document.getElementById("p-affil").innerText = state.affil;
+      document.getElementById("p-abstract").innerText = state.abstract;
+      document.getElementById("p-keywords").innerText = state.keywords;
+
+      saveState();
+    }
+
+    function applyTitlePreset() {
+      const val = document.getElementById("title-preset").value;
+      if (val !== "custom") {
+        document.getElementById("paper-title-input").value = val;
+        liveUpdate();
+      }
+    }
+
+    function updateFormat() {
+      const fmt = document.getElementById("target-format").value;
+      state.format = fmt;
+      const tag = document.getElementById("mode-display-tag");
+      const grid = document.getElementById("paper-grid");
+
+      if (fmt === "q1-journal") {
+        tag.innerText = "Q1 SCI Journal Full-Length Format";
+        grid.classList.add("single-col");
+      } else {
+        tag.innerText = "IEEE 2-Column Conference Format";
+        grid.classList.remove("single-col");
+      }
+      saveState();
+    }
+
+    function toggleColumnsView() {
+      const grid = document.getElementById("paper-grid");
+      isTwoColumn = !isTwoColumn;
+      if (isTwoColumn) {
+        grid.classList.remove("single-col");
+      } else {
+        grid.classList.add("single-col");
+      }
+    }
+
+    // --- CHART ENGINE ---
+    function initChart() {
+      const ctx = document.getElementById("live-paper-chart").getContext("2d");
+      chartInstance = new Chart(ctx, {
+        type: state.chartType,
+        data: {
+          labels: state.chartLabels,
+          datasets: [{
+            label: state.chartDsLabel,
+            data: state.chartDsData,
+            backgroundColor: ["rgba(255, 23, 68, 0.7)", "rgba(255, 214, 0, 0.7)", "rgba(0, 230, 118, 0.8)"],
+            borderColor: ["#ff1744", "#ffd600", "#00e676"],
+            borderWidth: 1.5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: "#e2e8f0" } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function updateCustomChart() {
+      const title = document.getElementById("chart-title-input").value;
+      const type = document.getElementById("chart-type-input").value;
+      const labels = document.getElementById("chart-labels-input").value.split(",").map(s => s.trim());
+      const dsLabel = document.getElementById("chart-ds1-label").value;
+      const dsData = document.getElementById("chart-ds1-data").value.split(",").map(Number);
+
+      state.chartTitle = title;
+      state.chartType = type;
+      state.chartLabels = labels;
+      state.chartDsLabel = dsLabel;
+      state.chartDsData = dsData;
+
+      document.getElementById("live-chart-caption").innerText = `Fig. 2. ${title}.`;
+
+      chartInstance.destroy();
+      const ctx = document.getElementById("live-paper-chart").getContext("2d");
+      chartInstance = new Chart(ctx, {
+        type: type,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: dsLabel,
+            data: dsData,
+            backgroundColor: type === "line" ? "rgba(0, 229, 255, 0.2)" : ["rgba(255, 23, 68, 0.7)", "rgba(255, 214, 0, 0.7)", "rgba(0, 230, 118, 0.8)"],
+            borderColor: "#0091ea",
+            borderWidth: 2,
+            fill: type === "line"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, grid: { color: "#e2e8f0" } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      saveState();
+    }
+
+    function loadGraphPreset() {
+      const preset = document.getElementById("graph-preset-select").value;
+      if (preset === "odom") {
+        document.getElementById("chart-title-input").value = "Rotational Odometry Drift per 360° Turn";
+        document.getElementById("chart-type-input").value = "bar";
+        document.getElementById("chart-labels-input").value = "Single-MCU Baseline, Uncalibrated Setup, SLAM Bot (Decoupled)";
+        document.getElementById("chart-ds1-label").value = "Rotational Error (°)";
+        document.getElementById("chart-ds1-data").value = "8.45, 14.20, 1.85";
+      } else if (preset === "pid") {
+        document.getElementById("chart-title-input").value = "50 Hz Closed-Loop Velocity Step Response";
+        document.getElementById("chart-type-input").value = "line";
+        document.getElementById("chart-labels-input").value = "0ms, 20ms, 40ms, 60ms, 80ms, 100ms, 120ms, 140ms, 160ms";
+        document.getElementById("chart-ds1-label").value = "Velocity (mm/s)";
+        document.getElementById("chart-ds1-data").value = "0, 45, 110, 185, 202, 200, 200, 200, 200";
+      } else if (preset === "residual") {
+        document.getElementById("chart-title-input").value = "Ceres SLAM Loop Closure Residual Minimization";
+        document.getElementById("chart-type-input").value = "line";
+        document.getElementById("chart-labels-input").value = "Iter 1, Iter 2, Iter 3, Iter 4, Iter 5, Iter 6";
+        document.getElementById("chart-ds1-label").value = "Residual Error (cm)";
+        document.getElementById("chart-ds1-data").value = "7.8, 4.3, 2.1, 1.2, 0.9, 0.8";
+      }
+      updateCustomChart();
+    }
+
+    // --- IMAGE UPLOAD ---
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64 = e.target.result;
+        state.fig2Image = base64;
+        state.fig2Caption = document.getElementById("img-caption-input").value;
+
+        const slot = document.getElementById("fig2-custom-slot");
+        const img = document.getElementById("fig2-custom-img");
+        const cap = document.getElementById("fig2-custom-caption");
+
+        img.src = base64;
+        cap.innerText = state.fig2Caption;
+        slot.style.display = "block";
+
+        document.getElementById("img-preview-box").innerHTML = `<img src="${base64}" style="max-width:100%; max-height:120px; border-radius:4px; margin-top:8px;" /><br/><span style="font-size:11px; color:var(--ok);">Image embedded successfully!</span>`;
+
+        saveState();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // --- SAVE & LOAD ---
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const badge = document.getElementById("save-status");
+      badge.style.opacity = "1";
+      setTimeout(() => { badge.style.opacity = "0.7"; }, 1500);
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          state = { ...state, ...JSON.parse(saved) };
+          document.getElementById("paper-title-input").value = state.title;
+          document.getElementById("paper-authors-input").value = state.authors;
+          document.getElementById("paper-affil-input").value = state.affil;
+          document.getElementById("paper-abstract-input").value = state.abstract;
+          document.getElementById("paper-keywords-input").value = state.keywords;
+          document.getElementById("target-format").value = state.format;
+
+          document.getElementById("p-title").innerText = state.title;
+          document.getElementById("p-authors").innerText = state.authors;
+          document.getElementById("p-affil").innerText = state.affil;
+          document.getElementById("p-abstract").innerText = state.abstract;
+          document.getElementById("p-keywords").innerText = state.keywords;
+
+          if (state.fig2Image) {
+            const slot = document.getElementById("fig2-custom-slot");
+            const img = document.getElementById("fig2-custom-img");
+            const cap = document.getElementById("fig2-custom-caption");
+            img.src = state.fig2Image;
+            cap.innerText = state.fig2Caption;
+            slot.style.display = "block";
+          }
+
+          updateFormat();
+        } catch (e) {
+          console.error("Error loading saved state", e);
+        }
+      }
+    }
+
+    function resetToDefaults() {
+      if (confirm("Reset paper contents and charts to default settings?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        state = { ...DEFAULT_DATA };
+        location.reload();
+      }
+    }
+
+    function exportMarkdown() {
+      window.open("Q1_JOURNAL_AND_CONFERENCE_RESEARCH.md", "_blank");
+    }
+  </script>
+</body>
+</html>

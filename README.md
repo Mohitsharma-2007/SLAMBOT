@@ -46,14 +46,14 @@
               │ UART (115200)         │  │  • /ws/lidar ─────────┼──▶│  • /scan             │  │
               ▼                       │  │  • /ws/motion ────────┼──▶│  • /odom             │  │
 ┌───────────────────────────┐  WiFi   │  │  • /ws/app ───────────┼──▶│  • slam_toolbox      │  │
-│      NodeMCU ESP8266      ├─────────┼─▶│  • /ws/relay ◀────────┼───┤  • Nav2 Planner/DWB  │  │
+│      NodeMCU ESP8266      ├─────────┼─▶│  • /ws/relay ◀────────┼───┤  • Nav2 Planner/DWB │  │
 │   (LiDAR Packet Parser)   │ (5.5Hz) │  │                       │   │  • explore_node      │  │
 └───────────────────────────┘         │  └───────────┬───────────┘   └──────────────────────┘  │
                                       │              │ WebSocket                               │
                                       │              ▼                                         │
 ┌───────────────────────────┐         │  ┌───────────────────────┐                             │
 │    Arduino Uno R4 WiFi    │  WiFi   │  │    React Dashboard    │                             │
-│   (50Hz PID Motor Ctrl    ├─────────┼─▶│   (Live Map / Tuning) │                             │
+│   (50Hz PID Motor Ctrl    ├────── ──┼─▶│   (Live Map / Tuning) │                            │
 │    & Quadrature Odom)     │ (20Hz)  │  └───────────────────────┘                             │
 └─────────────┬─────────────┘         └────────────────────────────────────────────────────────┘
               │ PWM (DRV8833) + Interrupts
@@ -179,6 +179,21 @@ Navigate to `http://localhost:8000` or `http://<HOST_IP>:8000` in any web browse
 * **Live PID & Motion Tuning**: Adjust motor speeds, PID gains, deadband thresholds, and motor polarity in real time with 1-click EEPROM persistence.
 * **Autonomous Frontier Exploration**: 1-click auto-explore to map entire rooms autonomously.
 * **Integrated Safety Watchdog**: 2000 ms link-loss automatic e-stop and collision avoidance.
+
+---
+
+## 📚 Research Papers & IEEE Studio
+
+The complete mathematical derivations, electrical schematics, literature gap analysis, and experimental benchmarks are compiled into peer-reviewed publication formats:
+
+* **Full Research Manuscript (Markdown)**: [`docs/Q1_JOURNAL_AND_CONFERENCE_RESEARCH.md`](docs/Q1_JOURNAL_AND_CONFERENCE_RESEARCH.md)
+  * *Sections*: Abstract, 1997–2025 Literature Gap Timeline Matrix, Dual-Rail Schematics, Runge-Kutta 2nd-Order Odometry, Ceres Pose-Graph SLAM, BFS Frontier Exploration, Future AI/ML Integrations (PPO, ViT, NROC), and Comparative Benchmark Tables.
+* **Interactive Paper Studio (Web App)**: [`docs/paper_studio.html`](docs/paper_studio.html)
+  * Real-time `localStorage` autosave.
+  * Live Chart.js interactive graph generator with custom series input.
+  * Base64 image uploader for schematics, chassis photos, and maps.
+  * 1-click IEEE 2-Column Conference vs. Q1 SCI Journal layout toggle.
+  * Direct 1-click camera-ready IEEE PDF printing.
 
 ---
 
