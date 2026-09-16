@@ -24,15 +24,20 @@ Follow these exact architectural requirements, net connections, and design rules
   * 1x SMAJ9.0A or SMBJ9.0A TVS diode across battery input for inductive load dump suppression.
   * 1x Green "BATT_OK" LED with 2.2k resistor.
 - Dual-Rail Power Branching:
-  * Branch A: Raw Motor Rail (VM, 7.4V - 8.4V):
-    - Connects directly after reverse polarity MOSFET and PPTC fuse to the DRV8833 motor driver VM pin.
-    - Decoupled with 1x 470uF 25V low-ESR radial electrolytic capacitor and 2x 10uF 1206 ceramic capacitors placed directly adjacent to motor driver pins.
+  * Branch A: Raw Battery Rail (VBAT / VM, 7.4V - 8.4V):
+    - Connects directly after the reverse polarity P-MOSFET (AO3401A) and 2.6A PPTC fuse to:
+      1. DRV8833 motor driver VM pin (motor load). Decoupled with 1x 470uF 25V low-ESR radial electrolytic capacitor and 2x 10uF 1206 ceramic caps.
+      2. **Arduino Uno R4 WiFi VIN pin (CRITICAL HARDWARE BUG FIX)**:
+         * Problem in earlier prototypes: Powering the Arduino from the shared 5V step-down rail resulted in MCU reset brownouts when the RPLIDAR A1 motor spun up concurrently with ESP32-S3 WiFi transmit bursts.
+         * Solution: Power is routed directly from the 2S LiPo battery (7.4V nominal) to the Arduino Uno R4 **VIN pin**.
+         * The Arduino Uno R4 integrates an onboard high-efficiency synchronous buck converter (Renesas / TI ISL854102, rated 6V–24V input). Supplying 7.4V battery power to VIN completely isolates the Renesas RA4M1 ARM Cortex-M4 and WiFi radio from peripheral 5V load spikes, ensuring zero brownouts and deterministic control loop execution.
   * Branch B: Regulated 5.00V Logic Rail (5V_SYS, 3.0A):
     - Texas Instruments TPS54302 or Monolithic Power Systems MP1584 high-frequency synchronous step-down buck converter (or LM2596-5.0 module footprint).
     - Input: 7.4V battery rail.
     - Output: 5.00V +/- 0.05V, rated for 3A continuous output current.
     - Inductor: 10uH shielded power inductor (rated >= 4A saturation current).
     - Filter capacitors: 2x 22uF 16V 1206 ceramic capacitors at output, buffered by 1x 470uF 10V low-ESR electrolytic capacitor.
+    - Powers: NodeMCU ESP8266 (via VIN pin) and Slamtec RPLIDAR A1 (which draws up to 500mA during motor spin-up).
     - 1x Blue "5V_LOGIC" power LED with 1k resistor.
   * Branch C: Regulated 3.30V Peripheral Rail (3V3_SYS, 1.0A):
     - AMS1117-3.3 (SOT-223) or AP2112K-3.3 (SOT-23-5) linear regulator fed from the 5V_SYS rail.
@@ -44,7 +49,7 @@ Follow these exact architectural requirements, net connections, and design rules
 ==============================================================================
 - Microcontroller 1 (Motion & Odometry Controller):
   * Female pin header sockets mating with standard Arduino Uno R4 WiFi form factor (0.1" pitch female headers: 1x 10-pin, 2x 8-pin, 1x 6-pin).
-  * Connects 5V_SYS to Arduino 5V pin; Connects System GND to Arduino GND pins.
+  * Connects Raw Battery Rail (VBAT, 7.4V) to Arduino **VIN pin** (utilizing onboard buck regulator); Connects System GND to Arduino GND pins.
   * Pin Routing:
     - Arduino D2: Connected to LEFT_ENC_A with 10k pull-up to 5V.
     - Arduino D4: Connected to LEFT_ENC_B with 10k pull-up to 5V.
