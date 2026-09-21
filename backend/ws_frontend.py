@@ -247,10 +247,9 @@ async def _handle_drive(client: Client, msg: dict[str, Any]) -> None:
         return
 
     async with STATE.lock:
-        if not STATE.running and (linear != 0.0 or angular != 0.0):
-            STATE.set_running(True)
-            await ws_robot.push_control("start")
-            STATE.logs.emit("system", "info", "RUN state: auto-armed on manual drive")
+        if not STATE.running:
+            await _reply(client, False, "ignored: bot is stopped — press Start first")
+            return
 
         if STATE.control_mode != "manual":
             STATE.control_mode = "manual"

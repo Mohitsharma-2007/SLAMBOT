@@ -326,6 +326,24 @@ async def ws_flash(ws: WebSocket) -> None:
 BACKGROUND_TASKS: list[asyncio.Task[Any]] = []
 
 
+async def _udp_beacon_loop() -> None:
+    """Broadcasts a discovery beacon on LAN UDP port 8888 so phone apps auto-discover the host."""
+    import socket
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.setblocking(False)
+        payload = json.dumps({"service": "slambot_server", "port": SETTINGS.port}).encode("utf-8")
+        while True:
+            try:
+                sock.sendto(payload, ("255.255.255.255", 8888))
+            except Exception:
+                pass
+            await asyncio.sleep(2.0)
+    except Exception as exc:
+        logger.info("UDP beacon disabled: %s", exc)
+
+
 async def _startup() -> None:
     loop = asyncio.get_running_loop()
 
@@ -364,23 +382,6 @@ async def _startup() -> None:
             STATE.logs.emit(
                 "ai", "warn", f"AI unavailable: {ADVISOR.last_error}"
             )
-
-async def _udp_beacon_loop() -> None:
-    """Broadcasts a discovery beacon on LAN UDP port 8888 so phone apps auto-discover the host."""
-    import socket
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.setblocking(False)
-        payload = json.dumps({"service": "slambot_server", "port": SETTINGS.port}).encode("utf-8")
-        while True:
-            try:
-                sock.sendto(payload, ("255.255.255.255", 8888))
-            except Exception:
-                pass
-            await asyncio.sleep(2.0)
-    except Exception as exc:
-        logger.info("UDP beacon disabled: %s", exc)
 
     BACKGROUND_TASKS.extend(
         [
@@ -500,5 +501,5 @@ if __name__ == "__main__":
         port=SETTINGS.port,
         reload=False,
         log_level="info",
-        ws="wsproto",
+        ws="auto",
     )
