@@ -481,17 +481,27 @@ table.scholarly-table .num-cell {
   text-decoration: underline;
 }
 
-/* --- PRINT MEDIA QUERY (STRICT A4 PRINTING) --- */
+/* --- PRINT MEDIA QUERY (STRICT A4 MULTI-PAGE PRINTING) --- */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 20mm 18mm 20mm 18mm;
+    margin: 15mm 15mm 15mm 15mm;
   }
 
-  body {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html, body {
     background: #ffffff !important;
-    font-size: 9.5pt;
-    line-height: 1.4;
+    color: #000000 !important;
+    font-size: 9.5pt !important;
+    line-height: 1.45 !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
   }
 
   .academic-topbar,
@@ -500,14 +510,19 @@ table.scholarly-table .num-cell {
   }
 
   .manuscript-layout {
+    display: block !important;
     padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
   }
 
   .manuscript-body {
     max-width: 100% !important;
+    width: 100% !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
+    margin: 0 !important;
   }
 
   .figure-container {
@@ -521,9 +536,19 @@ table.scholarly-table .num-cell {
     break-inside: avoid;
   }
 
+  .equation-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
   h2.sec-head,
   h3.subsec-head {
     page-break-after: avoid;
     break-after: avoid;
+  }
+
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
   }
 }

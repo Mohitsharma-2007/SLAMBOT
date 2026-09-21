@@ -33,10 +33,19 @@
       <span style="color:#64748b; font-size:12px;">Manuscript Draft · 2-Column Standard</span>
     </div>
     <div class="topbar-actions">
+      <a href="SLAM_Bot_Conference_Paper.pdf" download="SLAM_Bot_Conference_Paper.pdf" class="btn-tool btn-tool-primary" title="Direct download of the complete 3-page IEEE ICRA PDF">📥 Download PDF (2-Col)</a>
+      <button class="btn-tool" onclick="window.print()" title="Print physical A4 or Save to PDF via Browser">🖨️ Print / Save PDF</button>
       <a href="../journal/journal.html" class="btn-tool" title="View the comprehensive 18-section Q1 SCI Journal version">📚 Journal Version</a>
-      <button class="btn-tool btn-tool-primary" onclick="window.print()" title="Print physical A4 or Save to PDF">🖨️ Print / Save PDF</button>
     </div>
   </header>
+
+  <script>
+    if (window.location.search.includes('print=true')) {
+      window.addEventListener('load', () => {
+        setTimeout(() => { window.print(); }, 1200);
+      });
+    }
+  </script>
 
   <!-- MAIN CONFERENCE LAYOUT -->
   <div class="conference-layout">

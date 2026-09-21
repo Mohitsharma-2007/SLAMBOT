@@ -368,11 +368,20 @@ table.conf-table .num-cell {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 15mm 14mm 15mm 14mm;
+    margin: 14mm 14mm 14mm 14mm;
   }
 
-  body {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html, body {
     background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   .academic-topbar {
@@ -380,19 +389,34 @@ table.conf-table .num-cell {
   }
 
   .conference-layout {
+    display: block !important;
     padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
   }
 
   .conference-sheet {
     max-width: 100% !important;
+    width: 100% !important;
     box-shadow: none !important;
     border: none !important;
     padding: 0 !important;
+    margin: 0 !important;
   }
 
   .conf-table-container,
   .conf-figure {
     page-break-inside: avoid;
     break-inside: avoid;
+  }
+
+  .conf-equation {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
   }
 }

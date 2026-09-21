@@ -192,14 +192,18 @@
 
     <!-- ACTIONS -->
     <div class="action-group">
+      <a id="btn-download-pdf" href="journal/SLAM_Bot_Journal_Paper.pdf" download="SLAM_Bot_Journal_Paper.pdf" class="btn-action btn-action-primary" title="Direct 1-click download of the complete compiled publication PDF">
+        <span>📥</span>
+        <span id="txt-download-pdf">Download PDF (20 Pages)</span>
+      </a>
+      <button class="btn-action" onclick="printCurrentView()" title="Open full multi-page print dialog to Save as PDF">
+        <span>🖨️</span>
+        <span>Print / Save PDF</span>
+      </button>
       <a id="btn-open-ext" href="journal/journal.html" target="_blank" class="btn-action" title="Open current paper in its own browser tab">
         <span>↗️</span>
         <span>Open Standalone</span>
       </a>
-      <button class="btn-action btn-action-primary" onclick="printCurrentView()" title="Print physical A4 or export to PDF">
-        <span>🖨️</span>
-        <span>Print / Save PDF</span>
-      </button>
     </div>
   </header>
 
@@ -213,6 +217,8 @@
     const btnJournal = document.getElementById('btn-journal');
     const btnConf = document.getElementById('btn-conf');
     const btnOpenExt = document.getElementById('btn-open-ext');
+    const btnDownloadPdf = document.getElementById('btn-download-pdf');
+    const txtDownloadPdf = document.getElementById('txt-download-pdf');
 
     let currentMode = 'journal';
 
@@ -227,6 +233,9 @@
         btnConf.classList.remove('active');
         btnConf.setAttribute('aria-selected', 'false');
         btnOpenExt.href = 'journal/journal.html';
+        btnDownloadPdf.href = 'journal/SLAM_Bot_Journal_Paper.pdf';
+        btnDownloadPdf.download = 'SLAM_Bot_Journal_Paper.pdf';
+        txtDownloadPdf.textContent = 'Download PDF (20 Pages)';
         document.title = 'SLAM Bot — IEEE Transactions on Robotics Journal Paper';
       } else {
         frame.src = 'conference/conference.html';
@@ -235,16 +244,23 @@
         btnJournal.classList.remove('active');
         btnJournal.setAttribute('aria-selected', 'false');
         btnOpenExt.href = 'conference/conference.html';
+        btnDownloadPdf.href = 'conference/SLAM_Bot_Conference_Paper.pdf';
+        btnDownloadPdf.download = 'SLAM_Bot_Conference_Paper.pdf';
+        txtDownloadPdf.textContent = 'Download PDF (3 Pages)';
         document.title = 'SLAM Bot — IEEE ICRA Conference Paper (2-Column)';
       }
     }
 
     function printCurrentView() {
-      try {
-        frame.contentWindow.focus();
-        frame.contentWindow.print();
-      } catch (e) {
-        window.open(btnOpenExt.href, '_blank');
+      // Opening standalone page with ?print=true prevents iframe clipping bugs
+      const targetUrl = currentMode === 'journal' 
+        ? 'journal/journal.html?print=true' 
+        : 'conference/conference.html?print=true';
+      const printWin = window.open(targetUrl, '_blank');
+      if (printWin) {
+        printWin.focus();
+      } else {
+        window.location.href = targetUrl;
       }
     }
 
